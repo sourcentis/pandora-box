@@ -155,10 +155,10 @@ Tasks:
 
 - [x] List of validated ThinkCentre models
 - [x] Touchscreen model selection and driver support
-- [ ] Physical hardening of the enclosure
-- [ ] Assembly guide
 - [x] Enclosure design published under an open hardware license ([3D/](3D/))
 - [x] BIOS configuration guide
+- [x] Assembly guide
+- [ ] ~~Physical hardening of the enclosure~~ *(not retained)*
 
 ### System integrity
 
