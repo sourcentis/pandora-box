@@ -29,6 +29,7 @@ The open tasks of the phases below, by priority.
 
 1. Update server: one image per kiosk identifier, checked at boot and every hour (phase 5)
 2. Scan receipt for the user (phase 5)
+3. Refused USB devices shown on the kiosk screen and reported to the SIEM (phases 2 and 3)
 
 **3. Later**
 
@@ -176,6 +177,9 @@ Tasks:
 - [x] Hardened kernel settings
 - [x] `nftables` firewall: deny all by default
 - [x] **USBGuard**: only mass-storage devices allowed
+- [x] Composite devices blocked: a key that is also a keyboard (USB Rubber Ducky) is refused as a whole
+- [ ] Refused devices reported: USBGuard rejections in the logs and the SIEM export
+- [ ] Key removed or enumerated again during a scan reported as a suspicious behavior
 - [x] No USB network, wireless, Bluetooth, serial or modem drivers
 - [x] USBGuard rule for the touchscreen of the reference hardware
 - [x] No boot loader menu
@@ -215,6 +219,7 @@ Tasks:
 - [x] Secure Boot and dm-verity tested in the virtual machine
 - [x] Test keys for every supported filesystem and the refused cases
 - [x] Emulated keyboard and network adapter blocked by USBGuard
+- [ ] Composite device (keyboard and storage) blocked by USBGuard, its refusal shown and logged
 - [x] No outgoing network outside the update channel
 - [x] A/B update and rollback tested in the virtual machine
 - [x] Run in continuous integration
@@ -233,6 +238,8 @@ The kiosk draws a graphical interface on its touch screen: waiting for a key, sc
 - [x] Internationalization: French and English
 - [x] German and Dutch texts built in
 - [x] Accessibility: contrast and font size
+- [ ] Refused device screen: a device blocked by USBGuard is explained to the user
+- [ ] Result screen states that the content of the key was checked, not its hardware
 - [ ] ~~Protected administrator mode~~ *(not retained)*
 
 ## Phase 4 — Advanced analysis
@@ -327,6 +334,9 @@ An organization of about a hundred kiosks publishes their updates on its own ser
 - No `login` program, no root password, no login console, Ctrl-Alt-Del masked. The maintenance device (a request signed with the update key, valid 7 days) brings back the logs without login or network; a maintenance console or SSH goes against the absence of any login, and is only reconsidered if the logs are not enough.
 - No administrator mode on the kiosk itself (screen of status, logs and actions, behind a PIN or a signed key): the maintenance device already brings the logs back, the updates come on signed keys, and the actions (restart, switch off) need nothing more than the power; a PIN would add a shared secret, observable and only changed with a new image, to a system that has none.
 - Kernel: `lockdown=confidentiality`, memory initialization, IOMMU, unused modules removed. USBGuard authorizes no device before it starts (`usbcore.authorized_default=0`); USB HID is kept for the touchscreen, keyboards and mice are blocked; systemd-boot does not read the keyboard.
+- USBGuard rules use `with-interface equals`: every interface of an allowed device must be mass storage (or hub), so a composite device with a storage and a keyboard interface (USB Rubber Ducky) is refused as a whole and its storage never mounted. The touchscreen rule is pinned to its internal port (`via-port`), as its id and serial can be copied by a hostile device.
+- A refused device must not be ignored silently: the kiosk explains on its screen that the device presents itself as something other than a storage key (keyboard, network adapter...) and asks the user to hand it to the IT department, and the refusal goes to the logs and the SIEM (interface classes, id, port). Otherwise the user sees the waiting screen, may think the kiosk is broken and plug the device into a computer.
+- A verdict covers the content of a key, not its hardware. A BadUSB device can present itself as plain storage on the kiosk, pass the scan, and act as a keyboard on another computer (Rubber Ducky `ATTACKMODE`, possibly after a delay or depending on the detected host): no scan can detect it. The kiosk states this limit on its result screen; the countermeasure is the control of new HID devices on the workstations (USBGuard, GPO, EDR), out of scope. A key that disappears or is enumerated again during a scan is therefore reported as a suspicious behavior, not as an ordinary error.
 - systemd services: `ProtectSystem`, `NoNewPrivileges`, seccomp filters, `PrivateNetwork` and `MemoryDenyWriteExecute` for clamd, exposure measured by `systemd-analyze security` in the virtual machine test.
 - Scan workers: one per engine, each in a `bubblewrap` sandbox without network, under a dedicated user without capabilities, with a system call filter. The kiosk opens the files and passes their descriptors, hashes the files itself (hash engines never get the file), only accepts validated JSON from the workers and combines the results.
 
