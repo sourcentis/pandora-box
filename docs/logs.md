@@ -20,7 +20,7 @@ For a continuous export, see [Log export to a SIEM](siem.md).
 
 | Log | Path on the kiosk | Content |
 |---|---|---|
-| Kiosk | `/var/log/pandora-box/pandora-box.log` | JSON lines: devices inserted and removed, scans and their verdicts, infected files, quarantine and cleaning, signature and image updates, maintenance devices, errors |
+| Kiosk | `/var/log/pandora-box/pandora-box.log` | JSON lines: devices inserted and removed, USB devices refused by USBGuard, scans and their verdicts, infected files, quarantine and cleaning, signature and image updates, maintenance devices, errors |
 | Scan reports | `/var/lib/pandora-box/reports/` | One JSON report per scanned device (see [Scan report](engines.md#scan-report)) |
 | Quarantine | `/var/lib/pandora-box/quarantine/` | Copies of the infected files removed from the keys |
 | Journal | `journalctl` | System, services and kernel; one folder per boot, within the journald size limits |
@@ -83,8 +83,42 @@ comes last as it restarts the kiosk.
 | `signatures_installed`, `signatures_refused`, `signatures_not_newer` | Result of a signature update device |
 | `signatures_changed` | New signature set loaded after an online update |
 | `maintenance_refused` | Maintenance request refused |
+| `usb_device_blocked` | USB device refused by USBGuard (see [Refused USB devices](#refused-usb-devices)) |
 | `airgap_copied`, `airgap_failed`, `airgap_refused` | Copy of a key to a server (see [Copy to a server](airgap.md)) |
 | `display_started`, `display_resized` | Size of the screen the interface draws for |
+
+## Refused USB devices
+
+USBGuard blocks every USB device that is not only storage: a keyboard, a
+mouse, a network adapter, a key that is also a keyboard (BadUSB, see
+[USB devices](image.md#usb-devices)). Its audit log is readable only by
+root and is not sent to the SIEM: the kiosk follows it
+(`src/pandora_box/usbguard.py`) and logs each refused device in its own log,
+with the other events, as `usb_device_blocked` (level `WARNING`):
+
+| Field | Content |
+|---|---|
+| `target` | Decision of USBGuard: `block` (or `reject`) |
+| `usb_id` | Vendor and product identifiers, `vendor:product` |
+| `model`, `serial` | Name and serial number the device gives |
+| `port` | USB port, e.g. `1-2` |
+| `interfaces` | Interfaces of the device, `class:subclass:protocol` |
+| `kinds` | What these interfaces are: `storage`, `keyboard`, `mouse`, `hid`, `communications` (network, modem), `wireless` (Bluetooth), `vendor-specific`... |
+| `composite` | `true` for a storage device with another function: a key that is also a keyboard |
+| `connect_type` | `hotplug` when inserted, else present at boot or internal |
+| `system_name` | Path of the device in sysfs |
+| `rule` | Device rule of USBGuard, to adapt into an `allow` rule (touchscreen, mouse) |
+| `blocked_at` | Time of the decision of USBGuard |
+
+Devices blocked before the kiosk starts (at boot) are reported once it has
+started; the position of the last line read is saved
+(`/var/lib/pandora-box/usbguard-audit.json`), so a restart of the kiosk
+reports no device twice. On a [station](airgap.md#a-stolen-kiosk),
+`model`, `serial` and `rule` are left out.
+
+A device the operator meant to use (a mouse) appears here too; a key
+refused as a whole (`composite`), or a keyboard or a network adapter on a
+kiosk that has none, deserves a look.
 
 ## Export to a SIEM
 

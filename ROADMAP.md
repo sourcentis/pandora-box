@@ -178,7 +178,7 @@ Tasks:
 - [x] `nftables` firewall: deny all by default
 - [x] **USBGuard**: only mass-storage devices allowed
 - [x] Composite devices blocked: a key that is also a keyboard (USB Rubber Ducky) is refused as a whole
-- [ ] Refused devices reported: USBGuard rejections in the logs and the SIEM export
+- [x] Refused devices reported: USBGuard rejections in the logs and the SIEM export
 - [ ] Key removed or enumerated again during a scan reported as a suspicious behavior
 - [x] No USB network, wireless, Bluetooth, serial or modem drivers
 - [x] USBGuard rule for the touchscreen of the reference hardware

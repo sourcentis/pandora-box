@@ -87,12 +87,14 @@ partie message (MSG) du message syslog.
 | `kiosk_started` | Démarrage de la borne | `image_version`, `signature_set`, `engines`, `signatures` |
 | `signatures_installed`, `signatures_changed` | Nouveau jeu de signatures | `serial`, `created` |
 | `file_scanned` | Chaque fichier (beaucoup d'entrées) | `verdict`, `detail`, `engines`, `path` |
+| `usb_device_blocked` | Un périphérique USB refusé par USBGuard : clavier, adaptateur réseau, clé qui est aussi un clavier ([Périphériques USB refusés](logs.md#refused-usb-devices)) | `usb_id`, `model`, `serial`, `port`, `interfaces`, `kinds`, `composite`, `rule` |
 
 Chaque entrée contient aussi `timestamp` et `kiosk` (`kiosk.name`).
 `report_id` relie les événements d'une clé entre eux, et à son rapport
 d'analyse. `device_verdict` ne contient jamais de nom de fichier ;
 `file_scanned` et `device_inserted` contiennent les noms des fichiers, le
-libellé et le numéro de série de la clé (omis sur une
+libellé et le numéro de série de la clé, `usb_device_blocked` le nom et le
+numéro de série du périphérique (omis sur une
 [borne de transfert](airgap.md#a-stolen-kiosk)) : écartez-les dans le SIEM
 s'ils ne servent pas.
 
@@ -108,6 +110,7 @@ s'ils ne servent pas.
 | Durée d'analyse | `duration` de `device_verdict` (moyenne, 95e centile) |
 | Jeu de signatures de chaque borne | dernier `serial` de `signatures_installed` / `signatures_changed`, ou `signature_set` de `kiosk_started` |
 | Bornes silencieuses | heure de la dernière entrée de chaque `kiosk` |
+| Périphériques USB refusés (tentatives BadUSB), à alerter | `usb_device_blocked`, par `kinds` ; `composite` = `true` pour une clé qui est aussi un clavier |
 
 ### Exemples { #examples }
 

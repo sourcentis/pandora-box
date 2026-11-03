@@ -57,11 +57,12 @@ def get_logger(name: str) -> logging.Logger:
 
 
 # Fields of the events that come from a key: names of its files, their
-# hashes, its label, vendor, model and serial number, the lines of the screen
+# hashes, its label, vendor, model and serial number, the lines of the screen,
+# the USBGuard rule of a refused device (its name and serial number)
 KEY_FIELDS = frozenset(
     {
         "path", "sha256", "sha1", "md5", "label", "vendor", "model", "serial",
-        "partitions", "lines", "incomplete_reasons", "reasons", "output",
+        "partitions", "lines", "incomplete_reasons", "reasons", "output", "rule",
     }
 )  # fmt: skip
 REDACTED = "[redacted]"

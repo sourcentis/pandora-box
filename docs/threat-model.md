@@ -67,7 +67,7 @@ trusted.
 
 | Threat | Mitigations |
 |---|---|
-| A USB device that is a keyboard, a network adapter or a serial port (BadUSB) | USBGuard authorizes no device before it starts, then only mass storage; keyboards and mice are blocked; no USB network, Bluetooth, Wi-Fi or serial drivers ([USB devices](image.md#usb-devices)) |
+| A USB device that is a keyboard, a network adapter or a serial port (BadUSB) | USBGuard authorizes no device before it starts, then only mass storage; keyboards and mice are blocked; no USB network, Bluetooth, Wi-Fi or serial drivers ([USB devices](image.md#usb-devices)); each refused device is logged and sent to the SIEM (`usb_device_blocked`) |
 | A crafted filesystem exploiting a kernel driver | NTFS, exFAT and ext4 are read by FUSE drivers in the sandbox, the kernel has no driver for NTFS and exFAT; only vfat stays in the kernel ([Filesystem drivers](image.md#filesystem-drivers)) |
 | A file exploiting a parser (libmagic, YARA-X, ClamAV) | Each engine in its own worker, sandboxed: no network, no device, no data of the kiosk, dedicated user, system call filter; clamd in its own sandbox; a worker only reports its own engine, the kiosk combines the results ([Scan worker sandbox](image.md#scan-worker-sandbox)) |
 | Links, special files, deep trees, huge keys, decompression bombs | The inventory never follows a link nor leaves the device; limits on file size, file count and depth; beyond them the key is not verified |

@@ -86,11 +86,13 @@ syslog message.
 | `kiosk_started` | Start of the kiosk | `image_version`, `signature_set`, `engines`, `signatures` |
 | `signatures_installed`, `signatures_changed` | New signature set | `serial`, `created` |
 | `file_scanned` | Each file (many entries) | `verdict`, `detail`, `engines`, `path` |
+| `usb_device_blocked` | A USB device refused by USBGuard: keyboard, network adapter, key that is also a keyboard ([Refused USB devices](logs.md#refused-usb-devices)) | `usb_id`, `model`, `serial`, `port`, `interfaces`, `kinds`, `composite`, `rule` |
 
 Every entry also holds `timestamp` and `kiosk` (`kiosk.name`). `report_id`
 ties the events of a key together, and to its scan report. `device_verdict`
 never holds a name of a file; `file_scanned` and `device_inserted` hold the
-names of the files and the label and serial number of the key (left out on
+names of the files and the label and serial number of the key,
+`usb_device_blocked` the name and serial number of the device (left out on
 a [station](airgap.md#a-stolen-kiosk)): drop them in the SIEM when they are
 not needed.
 
@@ -106,6 +108,7 @@ not needed.
 | Scan time | `duration` of `device_verdict` (average, 95th percentile) |
 | Signature set of each kiosk | latest `serial` of `signatures_installed` / `signatures_changed`, or `signature_set` of `kiosk_started` |
 | Silent kiosks | time of the latest entry of each `kiosk` |
+| Refused USB devices (BadUSB attempts), to alert on | `usb_device_blocked`, by `kinds`; `composite` = `true` for a key that is also a keyboard |
 
 ### Examples
 

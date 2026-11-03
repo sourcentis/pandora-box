@@ -20,7 +20,7 @@ Pour un export continu, voir [Export vers un SIEM](siem.md).
 
 | Journal | Chemin sur la borne | Contenu |
 |---|---|---|
-| Borne | `/var/log/pandora-box/pandora-box.log` | Lignes JSON : clés insérées et retirées, analyses et leurs verdicts, fichiers infectés, quarantaine et nettoyage, mises à jour des signatures et de l'image, clés de maintenance, erreurs |
+| Borne | `/var/log/pandora-box/pandora-box.log` | Lignes JSON : clés insérées et retirées, périphériques USB refusés par USBGuard, analyses et leurs verdicts, fichiers infectés, quarantaine et nettoyage, mises à jour des signatures et de l'image, clés de maintenance, erreurs |
 | Rapports d'analyse | `/var/lib/pandora-box/reports/` | Un rapport JSON par clé analysée (voir [Rapport d'analyse](engines.md#scan-report)) |
 | Quarantaine | `/var/lib/pandora-box/quarantine/` | Copies des fichiers infectés supprimés des clés |
 | Journal système | `journalctl` | Système, services et noyau ; un dossier par démarrage, dans les limites de taille de journald |
@@ -86,8 +86,45 @@ redémarre la borne.
 | `signatures_installed`, `signatures_refused`, `signatures_not_newer` | Résultat d'une clé de mise à jour des signatures |
 | `signatures_changed` | Nouveau jeu de signatures chargé après une mise à jour en ligne |
 | `maintenance_refused` | Demande de maintenance refusée |
+| `usb_device_blocked` | Périphérique USB refusé par USBGuard (voir [Périphériques USB refusés](#refused-usb-devices)) |
 | `airgap_copied`, `airgap_failed`, `airgap_refused` | Copie d'une clé vers un serveur (voir [Copie vers un serveur](airgap.md)) |
 | `display_started`, `display_resized` | Taille de l'écran pour laquelle l'interface dessine |
+
+## Périphériques USB refusés { #refused-usb-devices }
+
+USBGuard bloque tout périphérique USB qui n'est pas seulement du stockage :
+un clavier, une souris, un adaptateur réseau, une clé qui est aussi un
+clavier (BadUSB, voir [Périphériques USB](image.md#usb-devices)). Son
+journal d'audit n'est lisible que par root et n'est pas envoyé au SIEM : la
+borne le suit (`src/pandora_box/usbguard.py`) et consigne chaque
+périphérique refusé dans son propre journal, avec les autres événements,
+sous la forme `usb_device_blocked` (niveau `WARNING`) :
+
+| Champ | Contenu |
+|---|---|
+| `target` | Décision d'USBGuard : `block` (ou `reject`) |
+| `usb_id` | Identifiants du fabricant et du produit, `fabricant:produit` |
+| `model`, `serial` | Nom et numéro de série donnés par le périphérique |
+| `port` | Port USB, par exemple `1-2` |
+| `interfaces` | Interfaces du périphérique, `classe:sous-classe:protocole` |
+| `kinds` | Nature de ces interfaces : `storage`, `keyboard`, `mouse`, `hid`, `communications` (réseau, modem), `wireless` (Bluetooth), `vendor-specific`... |
+| `composite` | `true` pour un périphérique de stockage qui a une autre fonction : une clé qui est aussi un clavier |
+| `connect_type` | `hotplug` s'il a été branché, sinon présent au démarrage ou interne |
+| `system_name` | Chemin du périphérique dans sysfs |
+| `rule` | Règle de périphérique d'USBGuard, à adapter en règle `allow` (écran tactile, souris) |
+| `blocked_at` | Heure de la décision d'USBGuard |
+
+Les périphériques bloqués avant le démarrage de la borne (au démarrage du
+système) sont signalés une fois qu'elle a démarré ; la position de la
+dernière ligne lue est enregistrée
+(`/var/lib/pandora-box/usbguard-audit.json`), si bien qu'un redémarrage de
+la borne ne signale aucun périphérique deux fois. Sur une
+[borne de transfert](airgap.md#a-stolen-kiosk), `model`, `serial` et `rule`
+sont omis.
+
+Un périphérique que l'opérateur voulait utiliser (une souris) apparaît
+aussi ; une clé refusée en entier (`composite`), ou un clavier ou un
+adaptateur réseau sur une borne qui n'en a pas, mérite un examen.
 
 ## Export vers un SIEM { #export-to-a-siem }
 

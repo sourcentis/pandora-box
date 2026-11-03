@@ -21,6 +21,7 @@ from pandora_box.sigsets import SignatureSetError
 from pandora_box.ui import ConsoleDisplay, Display
 from pandora_box.ui.framebuffer import FramebufferError
 from pandora_box.ui.theme import ThemeError, load_theme
+from pandora_box.usbguard import AuditWatcher
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -139,11 +140,17 @@ def main(argv: list[str] | None = None) -> int:
         lock.release()
         return 1
     notify_ready()
+    # The USB devices refused by USBGuard, logged with the other events
+    audit = AuditWatcher() if AuditWatcher.available() else None
+    if audit is not None:
+        audit.start()
     try:
         Kiosk(config, display, UdevSource(), pool, signatures_error=signatures_error).run()
     except KeyboardInterrupt:
         pass
     finally:
+        if audit is not None:
+            audit.stop()
         display.stop()
         pool.stop()
         lock.release()

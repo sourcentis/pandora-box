@@ -23,13 +23,12 @@ import socket
 import ssl
 import sys
 import threading
-from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from types import FrameType
-from typing import BinaryIO
 
 from pandora_box.config import DEFAULT_CONFIG_PATH, ConfigError, SiemConfig, load_config
+from pandora_box.follow import LogFollower, load_position, save_position
 
 STATE_PATH = Path("/var/lib/pandora-box-siem/state.json")
 APP_NAME = "pandora-box"
@@ -113,106 +112,6 @@ def frame(message: bytes, config: SiemConfig) -> bytes:
         return message + b"\n"
     # Octet counting (RFC 5425, RFC 6587)
     return f"{len(message)} ".encode("ascii") + message
-
-
-# -- Log file ------------------------------------------------------------------
-
-
-@dataclass(frozen=True)
-class Position:
-    """End of the last entry sent, in the log file of this inode."""
-
-    inode: int
-    offset: int
-
-
-def load_position(path: Path) -> Position | None:
-    try:
-        data = json.loads(path.read_text())
-        return Position(int(data["inode"]), int(data["offset"]))
-    except (OSError, ValueError, KeyError, TypeError):
-        return None
-
-
-def save_position(path: Path, position: Position) -> None:
-    temporary = path.with_name(path.name + ".tmp")
-    temporary.write_text(json.dumps({"inode": position.inode, "offset": position.offset}))
-    temporary.replace(path)
-
-
-def _open(path: Path) -> BinaryIO | None:
-    try:
-        return path.open("rb")
-    except FileNotFoundError:
-        return None
-
-
-class LogFollower:
-    """The complete lines of a log file, also across its rotations by logrotate."""
-
-    def __init__(self, path: Path, position: Position | None) -> None:
-        self.path = path
-        self.file: BinaryIO | None = None
-        if position is not None:
-            # The file of the saved position: the log file, or the one
-            # logrotate moved (delaycompress: not compressed yet)
-            for candidate in (path, path.with_name(path.name + ".1")):
-                file = _open(candidate)
-                if file is None:
-                    continue
-                stat = os.fstat(file.fileno())
-                if stat.st_ino == position.inode:
-                    file.seek(position.offset if position.offset <= stat.st_size else 0)
-                    self.file = file
-                    return
-                file.close()
-            _say("the log file of the last entry sent is gone: some entries are not sent")
-        self.file = _open(path)
-
-    def close(self) -> None:
-        if self.file is not None:
-            self.file.close()
-            self.file = None
-
-    def position(self) -> Position | None:
-        if self.file is None:
-            return None
-        return Position(os.fstat(self.file.fileno()).st_ino, self.file.tell())
-
-    def read(self, limit: int) -> list[bytes]:
-        """Up to limit complete lines, without their line break."""
-        if self.file is None:
-            self.file = _open(self.path)
-            if self.file is None:
-                return []
-        lines: list[bytes] = []
-        while len(lines) < limit:
-            start = self.file.tell()
-            line = self.file.readline()
-            if not line.endswith(b"\n"):
-                # The end of the file, or a line the kiosk is still writing
-                self.file.seek(start)
-                break
-            lines.append(line[:-1])
-        if not lines and self._replaced(self.file):
-            # At the end of a file logrotate moved: go on with the new one
-            self.close()
-            return self.read(limit)
-        return lines
-
-    def _replaced(self, file: BinaryIO) -> bool:
-        current = os.fstat(file.fileno())
-        try:
-            stat = self.path.stat()
-        except FileNotFoundError:
-            # Moved, the kiosk has not created the new one yet
-            return False
-        if stat.st_ino != current.st_ino:
-            return True
-        if stat.st_size < file.tell():
-            # Truncated: from its start again
-            file.seek(0)
-        return False
 
 
 # -- Connection ----------------------------------------------------------------
@@ -305,7 +204,11 @@ def run(
     sender: Sender | None = None,
 ) -> None:
     """Send the entries of the log file until stop is set."""
-    follower = LogFollower(log_file, load_position(state))
+    follower = LogFollower(
+        log_file,
+        load_position(state),
+        lambda _: _say("the log file of the last entry sent is gone: some entries are not sent"),
+    )
     sender = sender or Sender(config)
     pending: list[bytes] = []
     backoff = 0.0

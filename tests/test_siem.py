@@ -14,8 +14,9 @@ import pytest
 
 from pandora_box import siem
 from pandora_box.config import ConfigError, SiemConfig, parse_config
+from pandora_box.follow import LogFollower, Position, load_position, save_position
 from pandora_box.logs import get_logger, log_event, setup_logging
-from pandora_box.siem import LogFollower, Position, Sender, frame, syslog_message
+from pandora_box.siem import Sender, frame, syslog_message
 
 ENTRY = (
     b'{"timestamp": "2026-10-14T10:25:32.123456+00:00", "level": "WARNING", '
@@ -109,7 +110,7 @@ def test_follower_lost_position(tmp_path: Path, capsys: pytest.CaptureFixture[st
     log.write_bytes(b"a\n")
     follower = LogFollower(log, Position(log.stat().st_ino + 1, 100))
     assert follower.read(10) == [b"a"]
-    assert "some entries are not sent" in capsys.readouterr().err
+    assert "is read from its start" in capsys.readouterr().err
 
 
 def test_follower_truncated_file(tmp_path: Path) -> None:
@@ -124,11 +125,11 @@ def test_follower_truncated_file(tmp_path: Path) -> None:
 
 def test_position_file(tmp_path: Path) -> None:
     state = tmp_path / "state.json"
-    assert siem.load_position(state) is None
-    siem.save_position(state, Position(12, 34))
-    assert siem.load_position(state) == Position(12, 34)
+    assert load_position(state) is None
+    save_position(state, Position(12, 34))
+    assert load_position(state) == Position(12, 34)
     state.write_text("{}")
-    assert siem.load_position(state) is None
+    assert load_position(state) is None
 
 
 # -- Servers ---------------------------------------------------------------------
@@ -233,7 +234,7 @@ def test_run_over_tcp(tmp_path: Path, log: Path) -> None:
         service.close()
     assert events(server.messages()) == ["scan_started", "device_verdict"]
     assert server.messages()[0].startswith(b"<134>1 ")
-    assert siem.load_position(state) == Position(log.stat().st_ino, log.stat().st_size)
+    assert load_position(state) == Position(log.stat().st_ino, log.stat().st_size)
 
     # Logged while the service is stopped: sent at its next start, once
     log_event(logger, "device_removed")

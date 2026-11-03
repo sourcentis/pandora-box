@@ -510,6 +510,16 @@ def check_usb_policy(vm: Machine) -> None:
         "grep -c 'result=.SUCCESS.*target.new=.block' /var/log/usbguard/usbguard-audit.log || true"
     ).strip()
     print(f"no input device, no new network interface, {audit} devices blocked by USBGuard")
+    # The kiosk reports the refused devices in its log (and so to the SIEM)
+    deadline = time.monotonic() + 30
+    while True:
+        blocked = [e for e in events(vm) if e["event"] == "usb_device_blocked"]
+        kinds = {kind for e in blocked for kind in e.get("kinds", ())}
+        if {"keyboard", "communications"} <= kinds:
+            break
+        check(time.monotonic() < deadline, f"refused devices not in the kiosk log: {blocked}")
+        time.sleep(0.5)
+    print(f"{len(blocked)} usb_device_blocked events in the kiosk log: {sorted(kinds)}")
 
 
 SYSCTL = {

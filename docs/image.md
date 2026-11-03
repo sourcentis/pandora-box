@@ -129,7 +129,9 @@ A kiosk must only use USB storage devices: a key that is also a keyboard
 - **USBGuard** (`/etc/usbguard/rules.conf`) allows hubs and the devices
   whose interfaces are all mass storage; it blocks every other device,
   including a key that has a storage interface and another one. Blocked
-  devices are listed in `/var/log/usbguard/usbguard-audit.log`.
+  devices are listed in `/var/log/usbguard/usbguard-audit.log`, and the
+  kiosk reports each one in its own log as a `usb_device_blocked` event,
+  also sent to the SIEM ([Refused USB devices](logs.md#refused-usb-devices)).
 - **No device is authorized before USBGuard has started**: the kernel
   command line sets `usbcore.authorized_default=0`. If USBGuard does not
   start, no USB device is usable.

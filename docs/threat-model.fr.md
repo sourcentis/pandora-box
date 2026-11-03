@@ -70,7 +70,7 @@ publication sont de confiance.
 
 | Menace | Parades |
 |---|---|
-| Un périphérique USB qui est un clavier, un adaptateur réseau ou un port série (BadUSB) | USBGuard n'autorise aucun périphérique avant de démarrer, puis seulement le stockage de masse ; claviers et souris sont bloqués ; pas de pilotes réseau USB, Bluetooth, Wi-Fi ni série ([Périphériques USB](image.md#usb-devices)) |
+| Un périphérique USB qui est un clavier, un adaptateur réseau ou un port série (BadUSB) | USBGuard n'autorise aucun périphérique avant de démarrer, puis seulement le stockage de masse ; claviers et souris sont bloqués ; pas de pilotes réseau USB, Bluetooth, Wi-Fi ni série ([Périphériques USB](image.md#usb-devices)) ; chaque périphérique refusé est consigné et envoyé au SIEM (`usb_device_blocked`) |
 | Un système de fichiers forgé qui exploite un pilote du noyau | NTFS, exFAT et ext4 sont lus par des pilotes FUSE dans le bac à sable, le noyau n'a pas de pilote NTFS ni exFAT ; seul vfat reste dans le noyau ([Pilotes de systèmes de fichiers](image.md#filesystem-drivers)) |
 | Un fichier qui exploite un analyseur (libmagic, YARA-X, ClamAV) | Chaque moteur dans son propre processus, en bac à sable : sans réseau, sans périphérique, sans donnée de la borne, utilisateur dédié, filtre d'appels système ; clamd dans son propre bac à sable ; un processus ne rend que le résultat de son moteur, la borne combine les résultats ([Bac à sable des processus d'analyse](image.md#scan-worker-sandbox)) |
 | Liens, fichiers spéciaux, arborescences profondes, clés énormes, bombes de décompression | L'inventaire ne suit jamais un lien et ne sort jamais du périphérique ; limites de taille, de nombre de fichiers et de profondeur ; au-delà, la clé n'est pas vérifiée |
