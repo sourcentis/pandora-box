@@ -73,6 +73,7 @@ trusted.
 | Links, special files, deep trees, huge keys, decompression bombs | The inventory never follows a link nor leaves the device; limits on file size, file count and depth; beyond them the key is not verified |
 | Writing to the key during the scan, an ext4 journal replay | The key is mounted read-only on a read-only block device; an ext4 key whose journal needs a replay is refused |
 | A worker or driver that crashes or hangs | Timeouts and watchdogs; the files concerned are not fully scanned and the key is reported **not verified**, never clean |
+| A key that disconnects itself during its scan, to come back with another content or as another device | The USB device of the key is checked during the scan: a key removed or enumerated again is a suspicious behavior, logged and sent to the SIEM (`device_suspicious_behavior`); the key is **not verified**, neither cleaned nor copied to a server |
 | A key swapped between the scan and the cleaning | A file is only removed if its SHA-256 is still the scanned one |
 
 ### Malware passed off as clean

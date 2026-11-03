@@ -42,6 +42,10 @@ class ScanSummary:
     duration: float = 0.0
     # Why the device was not fully scanned (limits, unreadable folders)
     incomplete_reasons: list[str] = field(default_factory=list)
+    # Suspicious behaviors of the key during the scan ("removed",
+    # "enumerated_again"): its content cannot be trusted, each one is also
+    # an incomplete reason
+    behaviors: list[str] = field(default_factory=list)
 
     @property
     def infected(self) -> list[FileResult]:

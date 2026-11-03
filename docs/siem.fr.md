@@ -81,12 +81,13 @@ partie message (MSG) du message syslog.
 
 | Événement | Quand | Champs |
 |---|---|---|
-| `device_verdict` | Une fois par clé analysée : la synthèse à compter | `report_id`, `verdict` (`clean`, `malicious`, `suspicious`, `not_verified`), `complete`, `files`, `infected`, `suspicious`, `not_scanned`, `duration` (secondes), `used` (octets), `detections` (liste de `moteur: nom`) |
+| `device_verdict` | Une fois par clé analysée : la synthèse à compter | `report_id`, `verdict` (`clean`, `malicious`, `suspicious`, `not_verified`), `complete`, `files`, `infected`, `suspicious`, `not_scanned`, `duration` (secondes), `used` (octets), `detections` (liste de `moteur: nom`), `suspicious_behaviors` (`removed`, `enumerated_again`) |
 | `device_cleaned` | La clé a été nettoyée | `report_id`, `removed`, `infected` |
 | `airgap_copied`, `airgap_received`, `airgap_refused`, `airgap_failed` | Copie vers et depuis un serveur ([Copie vers un serveur](airgap.md)) | `report_id`, compteurs, `status` |
 | `kiosk_started` | Démarrage de la borne | `image_version`, `signature_set`, `engines`, `signatures` |
 | `signatures_installed`, `signatures_changed` | Nouveau jeu de signatures | `serial`, `created` |
 | `file_scanned` | Chaque fichier (beaucoup d'entrées) | `verdict`, `detail`, `engines`, `path` |
+| `device_suspicious_behavior` | Une clé retirée ou énumérée à nouveau pendant son analyse | `behavior`, `node`, `usb_device`, `busnum`, `devnum` |
 | `usb_device_blocked` | Un périphérique USB refusé par USBGuard : clavier, adaptateur réseau, clé qui est aussi un clavier ([Périphériques USB refusés](logs.md#refused-usb-devices)) | `usb_id`, `model`, `serial`, `port`, `interfaces`, `kinds`, `composite`, `rule` |
 
 Chaque entrée contient aussi `timestamp` et `kiosk` (`kiosk.name`).
@@ -110,6 +111,7 @@ s'ils ne servent pas.
 | Durée d'analyse | `duration` de `device_verdict` (moyenne, 95e centile) |
 | Jeu de signatures de chaque borne | dernier `serial` de `signatures_installed` / `signatures_changed`, ou `signature_set` de `kiosk_started` |
 | Bornes silencieuses | heure de la dernière entrée de chaque `kiosk` |
+| Clés retirées ou énumérées à nouveau pendant leur analyse, à alerter (`enumerated_again` surtout) | `device_suspicious_behavior` par `behavior`, ou `suspicious_behaviors` de `device_verdict` |
 | Périphériques USB refusés (tentatives BadUSB), à alerter | `usb_device_blocked`, par `kinds` ; `composite` = `true` pour une clé qui est aussi un clavier |
 
 ### Exemples { #examples }
@@ -158,8 +160,9 @@ end
 **Wazuh** (décodé par son décodeur JSON) : Wazuh n'indexe que les entrées
 qui correspondent à une règle ; une règle locale par événement à compter,
 puis des tableaux de bord sur `data.event` dans OpenSearch Dashboards. Un
-périphérique USB refusé lève une alerte (niveau 10, 12 pour une clé qui est
-aussi un autre périphérique) :
+périphérique USB refusé, ou une clé retirée ou énumérée à nouveau pendant
+son analyse, lève une alerte (niveau 10, 12 pour une clé qui est aussi un
+autre périphérique) :
 
 ```xml
 <group name="pandora-box,">
@@ -178,6 +181,12 @@ aussi un autre périphérique) :
     <if_sid>100110</if_sid>
     <field name="composite">^true$</field>
     <description>PandoraBox $(kiosk): USB key that is also a keyboard or another device (BadUSB)</description>
+  </rule>
+  <rule id="100120" level="10">
+    <decoded_as>json</decoded_as>
+    <field name="event">^device_suspicious_behavior$</field>
+    <description>PandoraBox $(kiosk): key $(behavior) during its scan</description>
+    <group>attack,badusb,</group>
   </rule>
 </group>
 ```

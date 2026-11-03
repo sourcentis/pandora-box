@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from pandora_box.config import Config, parse_config
-from pandora_box.device import Mounter, UsbDevice
+from pandora_box.device import Mounter, UsbDevice, UsbIdentity
 from pandora_box.engines import EngineSpec, FakeEngine
 from pandora_box.engines.fake import EICAR
 from pandora_box.monitor import DeviceEvent
@@ -96,6 +96,10 @@ class DirectoryMounter(Mounter):
 
     def device_present(self, device: UsbDevice) -> bool:
         return self.present
+
+    def usb_identity(self, device: UsbDevice) -> UsbIdentity | None:
+        # A directory, not a USB device
+        return None
 
     def eject(self, device: UsbDevice) -> None:
         assert not self.mounted, "ejected while mounted"

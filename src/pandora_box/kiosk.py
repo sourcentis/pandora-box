@@ -9,13 +9,22 @@ import logging
 import os
 import stat
 import subprocess
+import time
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 
 from pandora_box import __version__, airgap, imageupdate, keyfs, keyid, maintenance
 from pandora_box.config import Config
-from pandora_box.device import DeviceError, Mounter, SystemMountWatcher, UsbDevice
+from pandora_box.device import (
+    ENUMERATED_AGAIN,
+    REMOVED,
+    DeviceError,
+    Mounter,
+    SystemMountWatcher,
+    UsbDevice,
+    UsbIdentity,
+)
 from pandora_box.engines import Engine, EngineError, EngineKind, Verdict
 from pandora_box.engines.registry import NoEngineError, engine_specs, load_engines
 from pandora_box.hashing import hash_fd
@@ -62,6 +71,13 @@ logger = get_logger("kiosk")
 
 # Number of infected files listed on screen before asking to clean
 _MAX_LISTED = 10
+# Time between two checks of the USB device of the key during its scan, in seconds
+KEY_CHECK_SECONDS = 1.0
+# Suspicious behaviors of a key during its scan (ScanSummary.behaviors)
+BEHAVIOR_REASONS = {
+    REMOVED: "the key was removed during the scan",
+    ENUMERATED_AGAIN: "the key was enumerated again during the scan (another USB device)",
+}
 
 
 __all__ = [
@@ -268,6 +284,10 @@ class Kiosk:
         self.to_remove: list[FileResult] = []
         self.report: ScanReport | None = None
         self.actions = Actions()
+        # The USB device of the key at the start of its scan, and the time
+        # of its last check (None: not on USB, not checked)
+        self.usb_identity: UsbIdentity | None = None
+        self._key_checked = 0.0
         self.machine = StateMachine(
             {
                 State.START: self.on_start,
@@ -584,6 +604,9 @@ class Kiosk:
         started = datetime.now(UTC)
         # Signature versions as they are at the start of the scan
         engines = self.scanner.pool.engine_info()
+        # A key that leaves, or comes back as another device, during its scan
+        self.usb_identity = self.mounter.usb_identity(key)
+        self._key_checked = time.monotonic()
         for node, reason in key.unscannable:
             name = Path(node).name
             log_event(logger, "partition_not_scanned", logging.WARNING, node=node, reason=reason)
@@ -594,17 +617,24 @@ class Kiosk:
         self.display.progress(0)
         scanned = 0
         for index, volume in enumerate(volumes):
+            if not self._check_key(summary, force=True):
+                break
             error = self._scan_volume(volume, index, len(volumes), summary, usage)
             if error is None:
                 scanned += 1
-            elif not key.multiple:
-                return State.ERROR
-            else:
-                summary.incomplete_reasons.append(f"partition {volume.name}: {error}, not scanned")
+                continue
+            if key.multiple:
                 usage.partitions.append(
                     PartitionUsage(volume.node, volume.fs_type, volume.label, 0, 0, error)
                 )
-        if not scanned:
+            if not self._check_key(summary, force=True):
+                # Not readable as the key left: a verdict all the same
+                break
+            if not key.multiple:
+                return State.ERROR
+            summary.incomplete_reasons.append(f"partition {volume.name}: {error}, not scanned")
+        self._check_key(summary, force=True)
+        if not scanned and not summary.behaviors:
             self.display.message("Cannot read any partition of the device")
             return State.ERROR
         self.summary = summary
@@ -618,6 +648,9 @@ class Kiosk:
         self.to_remove = s.infected
         if self.config.scan.suspicious == "block":
             self.to_remove = s.infected + s.suspicious
+        if s.behaviors:
+            # The key is gone or another device: nothing to quarantine from it
+            self.to_remove = []
         self.report = build_report(
             self.config,
             self.device,
@@ -643,6 +676,7 @@ class Kiosk:
             duration=round(s.duration, 1),
             used=usage.used,
             detections=detections(s.files),
+            suspicious_behaviors=s.behaviors,
         )
         self.actions = Actions()
         self._save_report()
@@ -700,6 +734,7 @@ class Kiosk:
         log_event(logger, "scan_started", size=size, used=used, node=volume.node)
 
         def on_progress(result: FileResult, done: int, total: int) -> None:
+            self._check_key(summary)
             if multiple:
                 result = dataclasses.replace(result, volume=volume.name)
             self.display.message(f"[{done}/{total}] {describe(result)}")
@@ -722,6 +757,40 @@ class Kiosk:
         summary.incomplete_reasons += part.incomplete_reasons
         summary.duration += part.duration
         return None
+
+    def _check_key(self, summary: ScanSummary, force: bool = False) -> bool:
+        """Whether the key is still the USB device whose scan started.
+
+        A key removed, or enumerated again (it disconnected itself to come
+        back, maybe as another device), during its scan is reported as a
+        suspicious behavior: its content cannot be trusted, the key is not
+        verified. Checked at most every KEY_CHECK_SECONDS, unless force.
+        """
+        if summary.behaviors:
+            return False
+        if self.usb_identity is None or self.device is None:
+            return True
+        now = time.monotonic()
+        if not force and now - self._key_checked < KEY_CHECK_SECONDS:
+            return True
+        self._key_checked = now
+        behavior = self.mounter.identity_change(self.device, self.usb_identity)
+        if behavior is None:
+            return True
+        summary.behaviors.append(behavior)
+        summary.incomplete_reasons.append(BEHAVIOR_REASONS[behavior])
+        log_event(
+            logger,
+            "device_suspicious_behavior",
+            logging.WARNING,
+            behavior=behavior,
+            node=self.device.node,
+            usb_device=self.usb_identity.sysfs,
+            busnum=self.usb_identity.busnum,
+            devnum=self.usb_identity.devnum,
+        )
+        self.display.message(f"SUSPICIOUS: {BEHAVIOR_REASONS[behavior]}")
+        return False
 
     def _mount(self, volume: UsbDevice, read_only: bool = True) -> Path:
         """Mount a filesystem of the key, unless it is mounted read-only already."""
@@ -747,6 +816,14 @@ class Kiosk:
 
     def on_clean(self) -> State:
         if self.summary is None:
+            return State.WAIT
+        if self.summary.behaviors:
+            # Whatever scan.on_error: neither cleaned nor copied to a server
+            self._release()
+            self.display.show(Screen.NOT_VERIFIED, self.summary.unscanned)
+            self.display.message(
+                "SUSPICIOUS DEVICE, NOT VERIFIED: do not use it. Remove the device."
+            )
             return State.WAIT
         infected = self.to_remove
         if self.config.scan.suspicious == "warn" and self.summary.suspicious:

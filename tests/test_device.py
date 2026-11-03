@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -7,12 +8,17 @@ from typing import Any
 import pytest
 
 from pandora_box.device import (
+    ENUMERATED_AGAIN,
+    REMOVED,
     DeviceError,
     Mounter,
     SystemMountWatcher,
     UsbDevice,
+    UsbIdentity,
     find_mount,
+    identity_change,
     mount_options,
+    usb_identity,
 )
 
 
@@ -185,3 +191,68 @@ def test_system_eject(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     node.touch()
     SystemMountWatcher(["vfat"], mounts=tmp_path / "mounts").eject(UsbDevice(str(node), "vfat"))
     assert calls == [["/usr/bin/udisksctl", "power-off", "--no-user-interaction", "-b", str(node)]]
+
+
+def _sysfs(tmp_path: Path, devnum: int = 7, node: str = "sdb") -> Path:
+    """A sysfs tree: a key on port 1-2 of bus 1, its disk and its partition."""
+    sys = tmp_path / "sys"
+    port = sys / "devices" / "pci0000:00" / "0000:00:14.0" / "usb1" / "1-2"
+    disk = port / "1-2:1.0" / "host6" / "target6:0:0" / "6:0:0:0" / "block" / node
+    (disk / f"{node}1").mkdir(parents=True, exist_ok=True)
+    for folder, number in ((port.parent, 1), (port, devnum)):
+        (folder / "busnum").write_text("1\n")
+        (folder / "devnum").write_text(f"{number}\n")
+    (sys / "class" / "block").mkdir(parents=True, exist_ok=True)
+    for name, target in ((node, disk), (f"{node}1", disk / f"{node}1")):
+        link = sys / "class" / "block" / name
+        if link.is_symlink():
+            link.unlink()
+        link.symlink_to(target)
+    return sys
+
+
+def test_usb_identity(tmp_path: Path) -> None:
+    sys = _sysfs(tmp_path)
+    port = "devices/pci0000:00/0000:00:14.0/usb1/1-2"
+    # The USB device of the key, from its disk or its partition: not its interface
+    assert usb_identity("/dev/sdb", sys) == UsbIdentity(port, 1, 7)
+    assert usb_identity("/dev/sdb1", sys) == UsbIdentity(port, 1, 7)
+    assert usb_identity("/dev/sdc", sys) is None
+
+
+def test_usb_identity_not_on_usb(tmp_path: Path) -> None:
+    sys = tmp_path / "sys"
+    disk = sys / "devices" / "pci0000:00" / "nvme" / "block" / "nvme0n1"
+    disk.mkdir(parents=True)
+    (sys / "class" / "block").mkdir(parents=True)
+    (sys / "class" / "block" / "nvme0n1").symlink_to(disk)
+    assert usb_identity("/dev/nvme0n1", sys) is None
+
+
+def test_identity_change(tmp_path: Path) -> None:
+    sys = _sysfs(tmp_path)
+    before = usb_identity("/dev/sdb1", sys)
+    assert before is not None
+    assert identity_change(before, "/dev/sdb1", sys) is None
+    # Enumerated again on the same port: a new device number
+    _sysfs(tmp_path, devnum=8)
+    assert identity_change(before, "/dev/sdb1", sys) == ENUMERATED_AGAIN
+
+
+def test_identity_change_new_node(tmp_path: Path) -> None:
+    sys = _sysfs(tmp_path)
+    before = usb_identity("/dev/sdb1", sys)
+    assert before is not None
+    # Back as sdc: its node sdb1 is gone, another device is on its port
+    shutil.rmtree(sys / "devices")
+    (sys / "class" / "block" / "sdb1").unlink()
+    _sysfs(tmp_path, devnum=9, node="sdc")
+    assert identity_change(before, "/dev/sdb1", sys) == ENUMERATED_AGAIN
+
+
+def test_identity_change_removed(tmp_path: Path) -> None:
+    sys = _sysfs(tmp_path)
+    before = usb_identity("/dev/sdb1", sys)
+    assert before is not None
+    shutil.rmtree(sys / "devices" / "pci0000:00" / "0000:00:14.0" / "usb1" / "1-2")
+    assert identity_change(before, "/dev/sdb1", sys) == REMOVED

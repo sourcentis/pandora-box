@@ -76,6 +76,7 @@ publication sont de confiance.
 | Liens, fichiers spéciaux, arborescences profondes, clés énormes, bombes de décompression | L'inventaire ne suit jamais un lien et ne sort jamais du périphérique ; limites de taille, de nombre de fichiers et de profondeur ; au-delà, la clé n'est pas vérifiée |
 | Écrire sur la clé pendant l'analyse, rejouer un journal ext4 | La clé est montée en lecture seule sur un périphérique bloc en lecture seule ; une clé ext4 dont le journal doit être rejoué est refusée |
 | Un processus d'analyse ou un pilote qui plante ou se bloque | Délais et chiens de garde ; les fichiers concernés ne sont pas entièrement analysés et la clé est déclarée **non vérifiée**, jamais saine |
+| Une clé qui se déconnecte d'elle-même pendant son analyse, pour revenir avec un autre contenu ou comme un autre périphérique | Le périphérique USB de la clé est vérifié pendant l'analyse : une clé retirée ou énumérée à nouveau est un comportement suspect, consigné et envoyé au SIEM (`device_suspicious_behavior`) ; la clé est **non vérifiée**, ni nettoyée ni copiée vers un serveur |
 | Une clé échangée entre l'analyse et le nettoyage | Un fichier n'est supprimé que si son SHA-256 est toujours celui qui a été analysé |
 
 ### Un logiciel malveillant qui passe pour sain { #malware-passed-off-as-clean }

@@ -10,9 +10,9 @@ import pytest
 
 from pandora_box import __version__
 from pandora_box.config import Config, parse_config
-from pandora_box.device import UsbDevice
+from pandora_box.device import ENUMERATED_AGAIN, REMOVED, UsbDevice, UsbIdentity
 from pandora_box.engines import EngineError, EngineSpec
-from pandora_box.kiosk import Kiosk, NoEngineError, build_engines, build_pool
+from pandora_box.kiosk import BEHAVIOR_REASONS, Kiosk, NoEngineError, build_engines, build_pool
 from pandora_box.monitor import Action, DeviceEvent
 from pandora_box.ui.base import Screen
 from pandora_box.workers import WorkerPool
@@ -504,3 +504,82 @@ def test_device_verdict_sums_up_the_scan(
     # No name of a file in the summary
     assert "eicar.com" not in json.dumps(verdict)
     assert events["device_cleaned"]["report_id"] == report["report_id"]
+
+
+class ChangingKeyMounter(DirectoryMounter):
+    """A key on USB that leaves, or comes back as another device, during its scan."""
+
+    def __init__(self, mount_point: Path, behavior: str, after: int) -> None:
+        super().__init__(mount_point)
+        self.behavior = behavior
+        # Checks before the key changes
+        self.after = after
+        self.checks = 0
+
+    def usb_identity(self, device: UsbDevice) -> UsbIdentity | None:
+        return UsbIdentity("devices/pci0000:00/usb1/1-2", 1, 7)
+
+    def identity_change(self, device: UsbDevice, before: UsbIdentity) -> str | None:
+        self.checks += 1
+        if self.checks <= self.after:
+            return None
+        if self.behavior == REMOVED:
+            self.present = False
+        return self.behavior
+
+
+@pytest.mark.parametrize("behavior", [REMOVED, ENUMERATED_AGAIN])
+def test_key_changed_during_the_scan(
+    config: Config,
+    display: RecordingDisplay,
+    usb_tree: Path,
+    pool: WorkerPool,
+    caplog: pytest.LogCaptureFixture,
+    behavior: str,
+) -> None:
+    """A suspicious behavior: not verified, neither cleaned nor quarantined, reported."""
+    # Unchanged at the start of the scan, changed once it is done
+    mounter = ChangingKeyMounter(usb_tree, behavior, after=1)
+    with caplog.at_level(logging.INFO, logger="pandora_box"):
+        make_kiosk(config, display, mounter, [DeviceEvent(Action.ADD, DEVICE)], pool).run()
+    events = {r.getMessage(): getattr(r, "fields", {}) for r in caplog.records}
+    assert events["device_suspicious_behavior"]["behavior"] == behavior
+    assert events["device_suspicious_behavior"]["devnum"] == 7
+    verdict = events["device_verdict"]
+    # The EICAR file is still found, the key is not verified all the same
+    assert verdict["verdict"] == "malicious" and verdict["complete"] is False
+    assert verdict["suspicious_behaviors"] == [behavior]
+    report = json.loads(next(config.report.folder.glob("*.json")).read_text())
+    assert report["verdict"]["suspicious_behaviors"] == [behavior]
+    assert report["verdict"]["incomplete_reasons"] == [BEHAVIOR_REASONS[behavior]]
+    # Never cleaned, nothing quarantined
+    assert (usb_tree / "docs" / "eicar.com").exists()
+    assert display.confirmations == 0
+    assert "device_cleaned" not in events
+    assert not (config.quarantine.folder).exists()
+    assert display.screens[-1][0] is Screen.NOT_VERIFIED
+    assert f"SUSPICIOUS: {BEHAVIOR_REASONS[behavior]}" in display.messages
+    assert "SUSPICIOUS DEVICE, NOT VERIFIED: do not use it. Remove the device." in display.messages
+
+
+def test_key_changed_before_its_partition(
+    config: Config, display: RecordingDisplay, usb_tree: Path, pool: WorkerPool
+) -> None:
+    # Changed before the scan of its first partition: not scanned, a verdict all the same
+    mounter = ChangingKeyMounter(usb_tree, ENUMERATED_AGAIN, after=0)
+    make_kiosk(config, display, mounter, [DeviceEvent(Action.ADD, DEVICE)], pool).run()
+    report = json.loads(next(config.report.folder.glob("*.json")).read_text())
+    assert report["verdict"]["device"] == "not_verified"
+    assert report["verdict"]["statistics"]["files"] == 0
+    assert display.screens[-1][0] is Screen.NOT_VERIFIED
+
+
+def test_key_not_on_usb_is_not_checked(
+    config: Config, display: RecordingDisplay, usb_tree: Path, pool: WorkerPool
+) -> None:
+    # DirectoryMounter: a directory, not a USB device
+    make_kiosk(
+        config, display, DirectoryMounter(usb_tree), [DeviceEvent(Action.ADD, DEVICE)], pool
+    ).run()
+    report = json.loads(next(config.report.folder.glob("*.json")).read_text())
+    assert report["verdict"]["suspicious_behaviors"] == []

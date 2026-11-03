@@ -195,6 +195,11 @@
         "device": { "enum": ["clean", "malicious", "suspicious", "not_verified"] },
         "complete": { "type": "boolean" },
         "incomplete_reasons": { "type": "array", "items": { "type": "string" } },
+        "suspicious_behaviors": {
+          "description": "Behaviors of the key during its scan: removed, or enumerated again as a USB device",
+          "type": "array",
+          "items": { "enum": ["removed", "enumerated_again"] }
+        },
         "statistics": {
           "type": "object",
           "additionalProperties": false,

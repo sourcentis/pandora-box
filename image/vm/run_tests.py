@@ -1400,6 +1400,35 @@ def check_structure_key(vm: Machine, workdir: Path) -> None:
     print("secret.zip: not fully scanned (encrypted), kept; active.pdf: suspicious, removed")
 
 
+def check_key_removed_during_scan(vm: Machine, workdir: Path) -> None:
+    step("key removed during its scan")
+    # Enough files for the scan to last: the key is removed while it runs
+    content = workdir / "many-files"
+    for folder in range(40):
+        (content / f"folder{folder:02}").mkdir(parents=True)
+        for index in range(100):
+            path = content / f"folder{folder:02}" / f"file{index:03}.txt"
+            path.write_text(f"file {folder} {index}\n" * 20)
+    image = workdir / "many-files.img"
+    make_key(image, content)
+    log = KioskLog(vm)
+    vm.insert_key(image)
+    log.wait("inventory_done")
+    vm.remove_key()
+    behavior = log.wait("device_suspicious_behavior")
+    check(behavior["behavior"] == "removed", f"behavior: {behavior}")
+    verdict = log.wait("device_verdict")
+    check(
+        verdict["suspicious_behaviors"] == ["removed"] and not verdict["complete"],
+        f"device verdict: {verdict}",
+    )
+    check(verdict["files"] < 4000, f"the scan was over before the key was removed: {verdict}")
+    report = last_report(vm)
+    check(report["verdict"]["suspicious_behaviors"] == ["removed"], f"report: {report['verdict']}")
+    log.wait("device_removed")
+    print(f"removed after {verdict['files']} of 4000 files: suspicious behavior, not verified")
+
+
 def check_clean_key(vm: Machine, key: Path) -> None:
     step("insert the cleaned key again")
     vm.insert_key(key)
@@ -1462,6 +1491,7 @@ def main(argv: list[str] | None = None) -> int:
                 check_partitioned_keys(vm, workdir)
                 check_refused_keys(vm, workdir)
                 check_structure_key(vm, workdir)
+                check_key_removed_during_scan(vm, workdir)
                 check_signature_update(vm, workdir)
                 online_set = check_online_update(vm, workdir)
                 check_siem(vm)

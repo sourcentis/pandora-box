@@ -24,7 +24,7 @@ cleaning, once the files to remove are listed.
 | `warning` | Suspicious or not fully scanned files are kept (`scan.suspicious` or `scan.on_error` set to `warn`) |
 | `cleaned` | The removed files |
 | `not_cleaned` | The files that could not be removed, or the key was removed before the cleaning |
-| `not_verified` | Files that could not be scanned (`scan.on_error = "block"`): the key must not be used |
+| `not_verified` | Files that could not be scanned (`scan.on_error = "block"`), or a key removed or enumerated again during its scan: the key must not be used |
 | `error` | The key could not be mounted or read |
 | `service` | Maintenance, signature or image update device: the messages of the kiosk |
 

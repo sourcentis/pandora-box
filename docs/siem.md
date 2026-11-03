@@ -80,12 +80,13 @@ syslog message.
 
 | Event | When | Fields |
 |---|---|---|
-| `device_verdict` | Once per scanned key: the summary to count | `report_id`, `verdict` (`clean`, `malicious`, `suspicious`, `not_verified`), `complete`, `files`, `infected`, `suspicious`, `not_scanned`, `duration` (seconds), `used` (bytes), `detections` (list of `engine: name`) |
+| `device_verdict` | Once per scanned key: the summary to count | `report_id`, `verdict` (`clean`, `malicious`, `suspicious`, `not_verified`), `complete`, `files`, `infected`, `suspicious`, `not_scanned`, `duration` (seconds), `used` (bytes), `detections` (list of `engine: name`), `suspicious_behaviors` (`removed`, `enumerated_again`) |
 | `device_cleaned` | The key was cleaned | `report_id`, `removed`, `infected` |
 | `airgap_copied`, `airgap_received`, `airgap_refused`, `airgap_failed` | Copy to and from a server ([Copy to a server](airgap.md)) | `report_id`, counts, `status` |
 | `kiosk_started` | Start of the kiosk | `image_version`, `signature_set`, `engines`, `signatures` |
 | `signatures_installed`, `signatures_changed` | New signature set | `serial`, `created` |
 | `file_scanned` | Each file (many entries) | `verdict`, `detail`, `engines`, `path` |
+| `device_suspicious_behavior` | A key removed or enumerated again during its scan | `behavior`, `node`, `usb_device`, `busnum`, `devnum` |
 | `usb_device_blocked` | A USB device refused by USBGuard: keyboard, network adapter, key that is also a keyboard ([Refused USB devices](logs.md#refused-usb-devices)) | `usb_id`, `model`, `serial`, `port`, `interfaces`, `kinds`, `composite`, `rule` |
 
 Every entry also holds `timestamp` and `kiosk` (`kiosk.name`). `report_id`
@@ -108,6 +109,7 @@ not needed.
 | Scan time | `duration` of `device_verdict` (average, 95th percentile) |
 | Signature set of each kiosk | latest `serial` of `signatures_installed` / `signatures_changed`, or `signature_set` of `kiosk_started` |
 | Silent kiosks | time of the latest entry of each `kiosk` |
+| Keys removed or enumerated again during their scan, to alert on (`enumerated_again` above all) | `device_suspicious_behavior` by `behavior`, or `suspicious_behaviors` of `device_verdict` |
 | Refused USB devices (BadUSB attempts), to alert on | `usb_device_blocked`, by `kinds`; `composite` = `true` for a key that is also a keyboard |
 
 ### Examples
@@ -155,7 +157,8 @@ end
 
 **Wazuh** (decoded by its JSON decoder): Wazuh only indexes the entries that
 match a rule; a local rule per event to count, then dashboards on
-`data.event` in OpenSearch Dashboards. A refused USB device raises an alert
+`data.event` in OpenSearch Dashboards. A refused USB device, or a key removed
+or enumerated again during its scan, raises an alert
 (level 10, 12 for a key that is also another device):
 
 ```xml
@@ -175,6 +178,12 @@ match a rule; a local rule per event to count, then dashboards on
     <if_sid>100110</if_sid>
     <field name="composite">^true$</field>
     <description>PandoraBox $(kiosk): USB key that is also a keyboard or another device (BadUSB)</description>
+  </rule>
+  <rule id="100120" level="10">
+    <decoded_as>json</decoded_as>
+    <field name="event">^device_suspicious_behavior$</field>
+    <description>PandoraBox $(kiosk): key $(behavior) during its scan</description>
+    <group>attack,badusb,</group>
   </rule>
 </group>
 ```

@@ -148,6 +148,7 @@ def build_report(
             "device": device_verdict(summary).value,
             "complete": summary.complete,
             "incomplete_reasons": list(summary.incomplete_reasons),
+            "suspicious_behaviors": list(summary.behaviors),
             "statistics": {
                 "files": len(files),
                 "bytes": sum(f.size for f in files),

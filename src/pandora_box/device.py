@@ -94,6 +94,72 @@ class UsbDevice:
         )
 
 
+# sysfs, where the kernel describes the devices
+SYS = Path("/sys")
+
+
+@dataclass(frozen=True)
+class UsbIdentity:
+    """The USB device of a key, as the kernel enumerated it.
+
+    The kernel gives a USB device a new device number (devnum) on its bus
+    each time it is enumerated: a key removed and inserted again, or that
+    disconnects itself to come back as another device (BadUSB), is a new
+    identity, even on the same port.
+    """
+
+    sysfs: str
+    busnum: int
+    devnum: int
+
+
+def usb_identity(node: str, sys: Path = SYS) -> UsbIdentity | None:
+    """The USB device of a block device node (a disk or a partition).
+
+    None when the node is gone, or is not on a USB device.
+    """
+    try:
+        path = (sys / "class" / "block" / Path(node).name).resolve(strict=True)
+    except OSError:
+        return None
+    devices = (sys / "devices").resolve()
+    while path != devices and path.is_relative_to(devices):
+        # The USB device, not its interfaces (1-2:1.0): busnum and devnum
+        try:
+            busnum = int((path / "busnum").read_text())
+            devnum = int((path / "devnum").read_text())
+        except (OSError, ValueError):
+            path = path.parent
+            continue
+        return UsbIdentity(str(path.relative_to(sys)), busnum, devnum)
+    return None
+
+
+# Suspicious behaviors of a key during its scan
+REMOVED = "removed"
+ENUMERATED_AGAIN = "enumerated_again"
+
+
+def identity_change(before: UsbIdentity, node: str, sys: Path = SYS) -> str | None:
+    """How the USB device of a key changed since before: None when it did not.
+
+    ENUMERATED_AGAIN: another USB device is on its node, or on its port (its
+    node is gone, a new one comes); REMOVED: its disk is gone, and no other
+    USB device is on its port.
+    """
+    now = usb_identity(node, sys)
+    if now == before:
+        return None
+    if now is not None:
+        return ENUMERATED_AGAIN
+    try:
+        devnum = int((sys / before.sysfs / "devnum").read_text())
+    except (OSError, ValueError):
+        return REMOVED
+    # The same USB device without its disk: the disk was removed
+    return REMOVED if devnum == before.devnum else ENUMERATED_AGAIN
+
+
 def mount_options(
     fs_type: str, read_only: bool, uid: int, gid: int, reader_gid: int | None = None
 ) -> list[str]:
@@ -256,6 +322,14 @@ class Mounter:
     def device_present(self, device: UsbDevice) -> bool:
         """Check that the device is still plugged in."""
         return Path(device.node).exists()
+
+    def usb_identity(self, device: UsbDevice) -> UsbIdentity | None:
+        """The USB device of a key, None when it is gone or not on USB."""
+        return usb_identity(device.node)
+
+    def identity_change(self, device: UsbDevice, before: UsbIdentity) -> str | None:
+        """How the USB device of a key changed since before (identity_change)."""
+        return identity_change(before, device.node)
 
     def eject(self, device: UsbDevice) -> None:
         """Eject an unmounted device, so that it can be removed safely."""

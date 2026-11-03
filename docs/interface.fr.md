@@ -25,7 +25,7 @@ listés.
 | `warning` | Des fichiers suspects ou pas entièrement analysés sont conservés (`scan.suspicious` ou `scan.on_error` réglé sur `warn`) |
 | `cleaned` | Les fichiers supprimés |
 | `not_cleaned` | Les fichiers qui n'ont pas pu être supprimés, ou la clé a été retirée avant le nettoyage |
-| `not_verified` | Des fichiers n'ont pas pu être analysés (`scan.on_error = "block"`) : la clé ne doit pas être utilisée |
+| `not_verified` | Des fichiers n'ont pas pu être analysés (`scan.on_error = "block"`), ou la clé a été retirée ou énumérée à nouveau pendant son analyse : la clé ne doit pas être utilisée |
 | `error` | La clé n'a pas pu être montée ou lue |
 | `service` | Clé de maintenance, de mise à jour des signatures ou de l'image : les messages de la borne |
 
