@@ -127,14 +127,18 @@ image/release.sh v1.0.0
 
 1. extracts the files of the tag only (`git archive`) to `release/v1.0.0/src/`:
    no local theme, credentials or development keys get into the image;
-2. builds the image without profile, signed with the Secure Boot key
+2. checks the PIN before the build: signs a test message with both keys of
+   the YubiKey and verifies it with the public keys of the tag; a wrong PIN
+   (one try used), a key that cannot sign or another key stops it at once,
+   with the PIN tries left;
+3. builds the image without profile, signed with the Secure Boot key
    (`image/build.sh --release`), trusting `image/release/update.pem`, with
    the inputs of a [reproducible build](#reproducing-a-release);
-3. checks the signature of the unified kernel image, builds the signed image
+4. checks the signature of the unified kernel image, builds the signed image
    update, compresses the disk image, writes the software bill of materials,
    signs the checksums with the update key, and checks every signature with
    the public keys of the tag;
-4. creates a **draft** release of the tag on GitHub with the files of
+5. creates a **draft** release of the tag on GitHub with the files of
    `release/v1.0.0/assets/`.
 
 | File | Content |

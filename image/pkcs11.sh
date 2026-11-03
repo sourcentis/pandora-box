@@ -3,6 +3,8 @@
 #   pkcs11_docker_options  on the build computer: options of docker run
 #   pkcs11_read_pin        on the build computer: PIN of the token
 #   pkcs11_setup           in the build container: PIN, key URIs, OpenSSL
+#   pkcs11_check_keys      in the build container, after pkcs11_setup: both
+#                          keys sign, and match the public keys of the tree
 #
 # The keys are in a YubiKey 5 (PIV), used through ykcs11 and the OpenSSL
 # PKCS#11 provider: the Secure Boot key in slot 9c, the update key in slot 82.
@@ -110,6 +112,46 @@ module = /usr/lib/x86_64-linux-gnu/ossl-modules/pkcs11.so
 $openssl_module
 activate = 1
 EOF
+}
+
+# Sign a short message with each key of the token and verify the signature
+# with the public key of the tree (image/release/), before a long build: the
+# PIN is right, both keys sign (the Ed25519 update key too), and they are the
+# keys of the release. A wrong PIN stops at the first key: one try is used.
+pkcs11_check_keys() {
+    local dir errors="" rc=0
+    dir=$(mktemp -d)
+    printf 'PandoraBox release keys check\n' >"$dir/message"
+    if ! errors=$(openssl pkeyutl -sign -inkey "$PANDORA_BOX_SECURE_BOOT_KEY" -rawin \
+        -digest sha256 -in "$dir/message" -out "$dir/secure-boot.sig" 2>&1); then
+        echo "error: the token refused to sign with the Secure Boot key: wrong PIN?" >&2
+        rc=1
+    elif ! OPENSSL_CONF=/dev/null openssl pkeyutl -verify -certin \
+        -inkey image/release/secure-boot.crt -rawin -digest sha256 \
+        -in "$dir/message" -sigfile "$dir/secure-boot.sig" >/dev/null 2>&1; then
+        echo "error: the Secure Boot key of the token is not the one of image/release/secure-boot.crt" >&2
+        rc=1
+    elif ! errors=$(openssl pkeyutl -sign -inkey "$PANDORA_BOX_UPDATE_KEY" -rawin \
+        -in "$dir/message" -out "$dir/update.sig" 2>&1); then
+        echo "error: the token refused to sign with the update key" >&2
+        rc=1
+    elif ! OPENSSL_CONF=/dev/null openssl pkeyutl -verify -pubin \
+        -inkey image/release/update.pem -rawin \
+        -in "$dir/message" -sigfile "$dir/update.sig" >/dev/null 2>&1; then
+        echo "error: the update key of the token is not the one of image/release/update.pem" >&2
+        rc=1
+    fi
+    rm -rf "$dir"
+    if [ "$rc" -ne 0 ]; then
+        if [ -n "$errors" ]; then
+            printf '%s\n' "$errors" | tail -n 3 >&2
+        fi
+        # Tries left on a YubiKey (read without the PIN)
+        if [ -z "${SOFTHSM2_CONF:-}" ] && [ -z "${PANDORA_BOX_PKCS11_MODULE:-}" ]; then
+            yubico-piv-tool -r Yubico -a status 2>/dev/null | grep -i 'PIN tries' >&2 || true
+        fi
+    fi
+    return "$rc"
 }
 
 # A PKCS#11 URI with the PIN file of the token, unless it gives a PIN

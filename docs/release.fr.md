@@ -133,15 +133,19 @@ image/release.sh v1.0.0
 1. extrait les seuls fichiers du tag (`git archive`) dans
    `release/v1.0.0/src/` : aucun thème local, identifiant ou clé de
    développement n'entre dans l'image ;
-2. construit l'image sans profil, signée avec la clé Secure Boot
+2. vérifie le PIN avant la construction : signe un message de test avec les
+   deux clés de la YubiKey et le vérifie avec les clés publiques du tag ; un
+   mauvais PIN (un essai consommé), une clé qui ne signe pas ou une autre clé
+   l'arrête aussitôt, avec les essais de PIN restants ;
+3. construit l'image sans profil, signée avec la clé Secure Boot
    (`image/build.sh --release`), qui fait confiance à
    `image/release/update.pem`, avec les entrées d'une
    [construction reproductible](#reproducing-a-release) ;
-3. vérifie la signature de l'image noyau unifiée, construit la mise à jour
+4. vérifie la signature de l'image noyau unifiée, construit la mise à jour
    signée de l'image, compresse l'image disque, écrit la nomenclature
    logicielle, signe les sommes de contrôle avec la clé de mise à jour, et
    vérifie chaque signature avec les clés publiques du tag ;
-4. crée un **brouillon** de version du tag sur GitHub avec les fichiers de
+5. crée un **brouillon** de version du tag sur GitHub avec les fichiers de
    `release/v1.0.0/assets/`.
 
 | Fichier | Contenu |

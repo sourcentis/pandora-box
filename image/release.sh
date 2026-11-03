@@ -58,7 +58,30 @@ done
 . "$out/src/image/pkcs11.sh"
 . "$out/src/image/reproducible.sh"
 reproducible_options "$tag"
+
+echo "Release $tag of PandoraBox: the image is built from the tag and signed with" >&2
+echo "the release keys of the YubiKey (Secure Boot key, slot 9c; update key, slot 82)." >&2
+echo "Plug in the YubiKey: its PIN is asked once, checked by signing a test message" >&2
+echo "with both keys, then used for the whole build. Three wrong PINs block the PIV" >&2
+echo "application of the YubiKey (its PUK unblocks it)." >&2
 pin=$(pkcs11_read_pin)
+# Before the build: the PIN is right, and both keys of the token are those of
+# the tag, with the signing tools of the tag (its build container, which
+# image/build.sh then finds in the cache)
+echo "Checking the PIN..." >&2
+docker build -q -t pandora-box-builder --build-arg SNAPSHOT="$snapshot" "$out/src/image" >/dev/null
+# shellcheck disable=SC2046  # pkcs11_docker_options: several words
+if ! printf '%s\n' "$pin" | docker run --rm $(pkcs11_docker_options) \
+    -v "$PWD/$out/src:/src:ro" -w /src pandora-box-builder bash -c '
+        set -euo pipefail
+        . image/pkcs11.sh
+        pkcs11_setup
+        pkcs11_check_keys'; then
+    echo "error: the release keys cannot sign: nothing was built" >&2
+    rm -rf "$out"
+    exit 1
+fi
+echo "PIN accepted: both release keys sign and are those of the tag. Building the release..." >&2
 # shellcheck disable=SC2086  # options: several words
 printf '%s\n' "$pin" | "$out/src/image/build.sh" --release $options
 
