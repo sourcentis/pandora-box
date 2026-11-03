@@ -106,7 +106,13 @@ de l'utilisateur, par QMP et par le shell de la console virtio :
     malveillants et reçoit son identifiant, puis un fichier retiré de la clé
     est supprimé du serveur ; un clavier et un adaptateur réseau USB
     émulés sont bloqués par USBGuard (aucun périphérique d'entrée, aucune
-    interface réseau) et les pilotes exclus ne sont pas dans l'image ; les
+    interface réseau), chacun expliqué à l'écran jusqu'à son retrait ; une
+    clé USB qui est aussi un clavier, émulée dans la machine comme un gadget
+    USB (`dummy_hcd`, `libcomposite` : une fonction de stockage de masse et
+    une fonction clavier), est bloquée en entier, ni montée ni analysée,
+    affichée sur l'écran `refused_composite` et consignée comme
+    `usb_device_blocked` avec `composite` ; les pilotes exclus ne sont pas
+    dans l'image ; les
     réglages du noyau, le pare-feu et les bacs à sable des services sont en
     place ;
 11. après un redémarrage, les rapports d'analyse sont toujours là, le

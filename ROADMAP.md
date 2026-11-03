@@ -219,7 +219,7 @@ Tasks:
 - [x] Secure Boot and dm-verity tested in the virtual machine
 - [x] Test keys for every supported filesystem and the refused cases
 - [x] Emulated keyboard and network adapter blocked by USBGuard
-- [ ] Composite device (keyboard and storage) blocked by USBGuard, its refusal shown and logged
+- [x] Composite device (keyboard and storage) blocked by USBGuard, its refusal shown and logged
 - [x] No outgoing network outside the update channel
 - [x] A/B update and rollback tested in the virtual machine
 - [x] Run in continuous integration

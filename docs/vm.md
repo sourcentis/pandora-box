@@ -97,7 +97,12 @@ the virtio console:
     keeps its malicious files and gets its identifier, then a file removed
     from the key is deleted from the server; an
     emulated USB keyboard and network adapter are blocked by USBGuard (no
-    input device, no network interface) and the excluded drivers are not in
+    input device, no network interface), each explained on the screen until
+    it is removed; a USB key that is also a keyboard, emulated in the machine
+    as a USB gadget (`dummy_hcd`, `libcomposite`: a mass storage and a
+    keyboard function), is blocked as a whole, neither mounted nor scanned,
+    shown on the `refused_composite` screen and logged as
+    `usb_device_blocked` with `composite`; the excluded drivers are not in
     the image; the kernel settings, the firewall and the service sandboxes are
     in place;
 11. after a reboot, the scan reports are still there, the root filesystem is

@@ -83,7 +83,9 @@ def step(message: str) -> None:
 
 
 def events(vm: Machine) -> list[dict[str, Any]]:
-    output = vm.shell.run(f"cat {LOG} 2>/dev/null || true")
+    # Without the entry of each scanned file: thousands for a large key, too
+    # much to read through the console of the machine
+    output = vm.shell.run(f'grep -v \'"event": "file_scanned"\' {LOG} 2>/dev/null || true')
     return [json.loads(line) for line in output.splitlines() if line.startswith("{")]
 
 
@@ -178,6 +180,19 @@ def last_report(vm: Machine) -> dict[str, Any]:
     path = vm.shell.run(f"ls -t {REPORTS}/*.json | head -n 1").strip()
     report: dict[str, Any] = json.loads(vm.shell.run(f"cat {path}"))
     return report
+
+
+def last_verdict(vm: Machine) -> dict[str, Any]:
+    """The verdict of the last report, read in the machine: the report of a
+    large key is too long for its console."""
+    path = vm.shell.run(f"ls -t {REPORTS}/*.json | head -n 1").strip()
+    verdict: dict[str, Any] = json.loads(
+        vm.shell.run(
+            "/usr/lib/pandora-box/bin/python -c 'import json, sys;"
+            f' print(json.dumps(json.load(open(sys.argv[1]))["verdict"]))\' {path}'
+        )
+    )
+    return verdict
 
 
 def check_boot(vm: Machine, timeout: float) -> None:
@@ -523,6 +538,95 @@ def check_usb_policy(vm: Machine) -> None:
         check(time.monotonic() < deadline, f"refused devices not in the kiosk log: {blocked}")
         time.sleep(0.5)
     print(f"{len(blocked)} usb_device_blocked events in the kiosk log: {sorted(kinds)}")
+
+
+# A USB key that is also a keyboard (USB Rubber Ducky), emulated in the
+# machine itself: a USB gadget on the virtual controller of dummy_hcd, with a
+# mass storage function and a boot keyboard (HID) function
+GADGET = "/sys/kernel/config/usb_gadget/composite"
+GADGET_PRODUCT = "Composite key"
+# HID report descriptor of a boot keyboard (USB HID 1.11, appendix B.1)
+KEYBOARD_REPORT = bytes.fromhex(
+    "05010906a101050719e029e71500250175019508810295017508810395057501"
+    "050819012905910295017503910395067508150025650507190029658100c0"
+)
+
+
+def plug_composite_device(vm: Machine) -> None:
+    report = "".join(f"\\{b:03o}" for b in KEYBOARD_REPORT)
+    for command in (
+        "modprobe dummy_hcd",
+        "modprobe libcomposite",
+        "mountpoint -q /sys/kernel/config || mount -t configfs none /sys/kernel/config",
+        "truncate -s 16M /run/composite.img",
+        f"mkdir -p {GADGET}/strings/0x409 {GADGET}/configs/c.1"
+        f" {GADGET}/functions/mass_storage.0 {GADGET}/functions/hid.0",
+        f"echo 0x1d6b > {GADGET}/idVendor",
+        f"echo 0x0104 > {GADGET}/idProduct",
+        f"echo 'PandoraBox test' > {GADGET}/strings/0x409/manufacturer",
+        f"echo '{GADGET_PRODUCT}' > {GADGET}/strings/0x409/product",
+        f"echo 0001 > {GADGET}/strings/0x409/serialnumber",
+        f"echo /run/composite.img > {GADGET}/functions/mass_storage.0/lun.0/file",
+        f"echo 1 > {GADGET}/functions/hid.0/subclass",
+        f"echo 1 > {GADGET}/functions/hid.0/protocol",
+        f"echo 8 > {GADGET}/functions/hid.0/report_length",
+        f"printf '{report}' > {GADGET}/functions/hid.0/report_desc",
+        f"ln -s {GADGET}/functions/mass_storage.0 {GADGET}/configs/c.1/",
+        f"ln -s {GADGET}/functions/hid.0 {GADGET}/configs/c.1/",
+        # Connected to the virtual controller: the machine sees a new device
+        f"ls /sys/class/udc > {GADGET}/UDC",
+    ):
+        vm.shell.run(command)
+
+
+def unplug_composite_device(vm: Machine) -> None:
+    for command in (
+        f"echo '' > {GADGET}/UDC",
+        f"rm -f {GADGET}/configs/c.1/mass_storage.0 {GADGET}/configs/c.1/hid.0",
+        f"rmdir {GADGET}/configs/c.1 {GADGET}/functions/mass_storage.0"
+        f" {GADGET}/functions/hid.0 {GADGET}/strings/0x409 {GADGET}",
+        "rm -f /run/composite.img",
+        "modprobe -r usb_f_mass_storage usb_f_hid libcomposite dummy_hcd",
+    ):
+        vm.shell.run(command, check=False)
+
+
+def check_composite_device(vm: Machine) -> None:
+    step("a USB key that is also a keyboard is refused as a whole")
+    log = KioskLog(vm)
+    plug_composite_device(vm)
+    try:
+        blocked = log.wait("usb_device_blocked", timeout=30)
+        while blocked.get("model") != GADGET_PRODUCT:
+            # The root hub of the virtual controller is allowed, never blocked
+            blocked = log.wait("usb_device_blocked", timeout=30)
+        check(blocked["composite"] is True, f"not composite: {blocked}")
+        check(blocked["kinds"] == ["keyboard", "storage"], f"kinds: {blocked}")
+        check(
+            sorted(blocked["interfaces"]) == ["03:01:01", "08:06:50"],
+            f"interfaces: {blocked}",
+        )
+        # Explained on the screen; the device was blocked as USBGuard saw it,
+        # after the kiosk started: not a device present at boot
+        screen = wait_screen(vm, "USB device refused")
+        check("also another device" in screen, f"not the composite screen:\n{screen}")
+        found = {n: flag for n, flag in usb_devices(vm).items() if n == GADGET_PRODUCT}
+        check(found == {GADGET_PRODUCT: "0"}, f"composite device authorized: {found}")
+        # Neither its storage nor its keyboard is usable
+        inputs = vm.shell.run(f"grep -i '{GADGET_PRODUCT}' /proc/bus/input/devices || true")
+        check(not inputs.strip(), f"input device created: {inputs}")
+        disks = vm.shell.run("lsblk -dno TRAN,NAME | grep '^usb' || true")
+        check(not disks.strip(), f"USB disk created: {disks}")
+        inserted = [e for e in events(vm)[-200:] if e["event"] == "device_inserted"]
+        check(
+            all(e.get("timestamp", "") < blocked["timestamp"] for e in inserted),
+            f"the composite device was scanned: {inserted[-1:]}",
+        )
+    finally:
+        unplug_composite_device(vm)
+    # Removed: back to the waiting screen
+    wait_screen(vm, "Please insert a USB key")
+    print(f"{GADGET_PRODUCT} ({blocked['usb_id']}): blocked as a whole, refused screen, logged")
 
 
 SYSCTL = {
@@ -1182,13 +1286,23 @@ class KioskLog:
         self, name: str, timeout: float = 120.0, action: Callable[[], None] | None = None
     ) -> dict[str, Any]:
         deadline = time.monotonic() + timeout
+        # Only the first line after the current one that names the event, and
+        # its number, come through the console: the log of a large key holds
+        # thousands of lines
+        pattern = f'"event": "{name}"'.replace('"', '\\"')
         while True:
-            output = self.vm.shell.run(f"tail -n +{self.line + 1} {LOG}")
-            for index, line in enumerate(output.splitlines()):
-                if line.startswith("{") and json.loads(line).get("event") == name:
-                    self.line += index + 1
-                    event: dict[str, Any] = json.loads(line)
+            output = self.vm.shell.run(
+                f'awk -v n={self.line} \'NR > n && index($0, "{pattern}")'
+                f" {{ print NR; print; exit }}' {LOG}"
+            )
+            found = output.strip().split("\n", 1)
+            if len(found) == 2 and found[0].isdigit():
+                self.line = int(found[0])
+                event: dict[str, Any] = json.loads(found[1])
+                if event.get("event") == name:
                     return event
+                # The name in another field (a file name): the next one
+                continue
             if time.monotonic() > deadline:
                 raise TestFailure(f"kiosk event {name} not logged after line {self.line}")
             if action is not None:
@@ -1425,14 +1539,21 @@ def check_key_removed_during_scan(vm: Machine, workdir: Path) -> None:
         verdict["suspicious_behaviors"] == ["removed"] and not verdict["complete"],
         f"device verdict: {verdict}",
     )
-    check(verdict["files"] < 4000, f"the scan was over before the key was removed: {verdict}")
-    # Shown a few seconds only once the key is removed: read from the log
+    # Every file of the inventory has a result: those read after the removal
+    # are errors
+    check(verdict["not_scanned"] > 0, f"the scan was over before the key was removed: {verdict}")
+    # Shown a few seconds only once the key is removed: read from the log.
+    # The display thread logs its screens: maybe after the removal, which is
+    # looked for from the same line
+    after_verdict = log.line
     while log.wait("display_screen")["screen"] != "key_changed":
         pass
-    report = last_report(vm)
-    check(report["verdict"]["suspicious_behaviors"] == ["removed"], f"report: {report['verdict']}")
+    log.line = after_verdict
+    report = last_verdict(vm)
+    check(report["suspicious_behaviors"] == ["removed"], f"report: {report}")
     log.wait("device_removed")
-    print(f"removed after {verdict['files']} of 4000 files: suspicious behavior, not verified")
+    scanned = verdict["files"] - verdict["not_scanned"]
+    print(f"removed after {scanned} of 4000 files: suspicious behavior, not verified")
 
 
 def check_clean_key(vm: Machine, key: Path) -> None:
@@ -1503,6 +1624,7 @@ def main(argv: list[str] | None = None) -> int:
                 check_siem(vm)
                 check_airgap(vm, workdir)
                 check_usb_policy(vm)
+                check_composite_device(vm)
                 check_hardening(vm)
                 check_audit(vm)
                 run_lynis(vm)
