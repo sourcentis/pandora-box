@@ -1580,7 +1580,7 @@ partie message (MSG) du message syslog.</p>
 <tr>
 <td><code>device_verdict</code></td>
 <td>Une fois par clé analysée : la synthèse à compter</td>
-<td><code>report_id</code>, <code>verdict</code> (<code>clean</code>, <code>malicious</code>, <code>suspicious</code>, <code>not_verified</code>), <code>complete</code>, <code>files</code>, <code>infected</code>, <code>suspicious</code>, <code>not_scanned</code>, <code>duration</code> (secondes), <code>used</code> (octets), <code>detections</code> (liste de <code>moteur: nom</code>)</td>
+<td><code>report_id</code>, <code>verdict</code> (<code>clean</code>, <code>malicious</code>, <code>suspicious</code>, <code>not_verified</code>), <code>complete</code>, <code>files</code>, <code>infected</code>, <code>suspicious</code>, <code>not_scanned</code>, <code>duration</code> (secondes), <code>used</code> (octets), <code>detections</code> (liste de <code>moteur: nom</code>), <code>suspicious_behaviors</code> (<code>removed</code>, <code>enumerated_again</code>)</td>
 </tr>
 <tr>
 <td><code>device_cleaned</code></td>
@@ -1606,6 +1606,11 @@ partie message (MSG) du message syslog.</p>
 <td><code>file_scanned</code></td>
 <td>Chaque fichier (beaucoup d'entrées)</td>
 <td><code>verdict</code>, <code>detail</code>, <code>engines</code>, <code>path</code></td>
+</tr>
+<tr>
+<td><code>device_suspicious_behavior</code></td>
+<td>Une clé retirée ou énumérée à nouveau pendant son analyse</td>
+<td><code>behavior</code>, <code>node</code>, <code>usb_device</code>, <code>busnum</code>, <code>devnum</code></td>
 </tr>
 <tr>
 <td><code>usb_device_blocked</code></td>
@@ -1664,6 +1669,10 @@ s'ils ne servent pas.</p>
 <td>heure de la dernière entrée de chaque <code>kiosk</code></td>
 </tr>
 <tr>
+<td>Clés retirées ou énumérées à nouveau pendant leur analyse, à alerter (<code>enumerated_again</code> surtout)</td>
+<td><code>device_suspicious_behavior</code> par <code>behavior</code>, ou <code>suspicious_behaviors</code> de <code>device_verdict</code></td>
+</tr>
+<tr>
 <td>Périphériques USB refusés (tentatives BadUSB), à alerter</td>
 <td><code>usb_device_blocked</code>, par <code>kinds</code> ; <code>composite</code> = <code>true</code> pour une clé qui est aussi un clavier</td>
 </tr>
@@ -1704,8 +1713,9 @@ end
 <p><strong>Wazuh</strong> (décodé par son décodeur JSON) : Wazuh n'indexe que les entrées
 qui correspondent à une règle ; une règle locale par événement à compter,
 puis des tableaux de bord sur <code>data.event</code> dans OpenSearch Dashboards. Un
-périphérique USB refusé lève une alerte (niveau 10, 12 pour une clé qui est
-aussi un autre périphérique) :</p>
+périphérique USB refusé, ou une clé retirée ou énumérée à nouveau pendant
+son analyse, lève une alerte (niveau 10, 12 pour une clé qui est aussi un
+autre périphérique) :</p>
 <div class="highlight"><pre><span></span><code><span class="nt">&lt;group</span><span class="w"> </span><span class="na">name=</span><span class="s">"pandora-box,"</span><span class="nt">&gt;</span>
 <span class="w">  </span><span class="nt">&lt;rule</span><span class="w"> </span><span class="na">id=</span><span class="s">"100100"</span><span class="w"> </span><span class="na">level=</span><span class="s">"3"</span><span class="nt">&gt;</span>
 <span class="w">    </span><span class="nt">&lt;decoded_as&gt;</span>json<span class="nt">&lt;/decoded_as&gt;</span>
@@ -1722,6 +1732,12 @@ aussi un autre périphérique) :</p>
 <span class="w">    </span><span class="nt">&lt;if_sid&gt;</span>100110<span class="nt">&lt;/if_sid&gt;</span>
 <span class="w">    </span><span class="nt">&lt;field</span><span class="w"> </span><span class="na">name=</span><span class="s">"composite"</span><span class="nt">&gt;</span>^true$<span class="nt">&lt;/field&gt;</span>
 <span class="w">    </span><span class="nt">&lt;description&gt;</span>PandoraBox<span class="w"> </span>$(kiosk):<span class="w"> </span>USB<span class="w"> </span>key<span class="w"> </span>that<span class="w"> </span>is<span class="w"> </span>also<span class="w"> </span>a<span class="w"> </span>keyboard<span class="w"> </span>or<span class="w"> </span>another<span class="w"> </span>device<span class="w"> </span>(BadUSB)<span class="nt">&lt;/description&gt;</span>
+<span class="w">  </span><span class="nt">&lt;/rule&gt;</span>
+<span class="w">  </span><span class="nt">&lt;rule</span><span class="w"> </span><span class="na">id=</span><span class="s">"100120"</span><span class="w"> </span><span class="na">level=</span><span class="s">"10"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;decoded_as&gt;</span>json<span class="nt">&lt;/decoded_as&gt;</span>
+<span class="w">    </span><span class="nt">&lt;field</span><span class="w"> </span><span class="na">name=</span><span class="s">"event"</span><span class="nt">&gt;</span>^device_suspicious_behavior$<span class="nt">&lt;/field&gt;</span>
+<span class="w">    </span><span class="nt">&lt;description&gt;</span>PandoraBox<span class="w"> </span>$(kiosk):<span class="w"> </span>key<span class="w"> </span>$(behavior)<span class="w"> </span>during<span class="w"> </span>its<span class="w"> </span>scan<span class="nt">&lt;/description&gt;</span>
+<span class="w">    </span><span class="nt">&lt;group&gt;</span>attack,badusb,<span class="nt">&lt;/group&gt;</span>
 <span class="w">  </span><span class="nt">&lt;/rule&gt;</span>
 <span class="nt">&lt;/group&gt;</span>
 </code></pre></div>

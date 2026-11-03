@@ -1648,6 +1648,10 @@ publication sont de confiance.</p>
 <td>Délais et chiens de garde ; les fichiers concernés ne sont pas entièrement analysés et la clé est déclarée <strong>non vérifiée</strong>, jamais saine</td>
 </tr>
 <tr>
+<td>Une clé qui se déconnecte d'elle-même pendant son analyse, pour revenir avec un autre contenu ou comme un autre périphérique</td>
+<td>Le périphérique USB de la clé est vérifié pendant l'analyse : une clé retirée ou énumérée à nouveau est un comportement suspect, consigné et envoyé au SIEM (<code>device_suspicious_behavior</code>) ; la clé est <strong>non vérifiée</strong>, ni nettoyée ni copiée vers un serveur</td>
+</tr>
+<tr>
 <td>Une clé échangée entre l'analyse et le nettoyage</td>
 <td>Un fichier n'est supprimé que si son SHA-256 est toujours celui qui a été analysé</td>
 </tr>

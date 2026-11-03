@@ -1645,6 +1645,10 @@ trusted.</p>
 <td>Timeouts and watchdogs; the files concerned are not fully scanned and the key is reported <strong>not verified</strong>, never clean</td>
 </tr>
 <tr>
+<td>A key that disconnects itself during its scan, to come back with another content or as another device</td>
+<td>The USB device of the key is checked during the scan: a key removed or enumerated again is a suspicious behavior, logged and sent to the SIEM (<code>device_suspicious_behavior</code>); the key is <strong>not verified</strong>, neither cleaned nor copied to a server</td>
+</tr>
+<tr>
 <td>A key swapped between the scan and the cleaning</td>
 <td>A file is only removed if its SHA-256 is still the scanned one</td>
 </tr>
