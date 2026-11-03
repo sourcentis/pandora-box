@@ -28,6 +28,21 @@ RUN if [ -n "$SNAPSHOT" ]; then \
         python3-paramiko openssh-client \
         pkcs11-provider p11-kit p11-kit-modules ykcs11 yubico-piv-tool pcscd libccid \
         softhsm2 opensc \
+    # ykcs11 2.7.1 of Debian 13 cannot sign with the Ed25519 update key: it
+    # does not list CKM_EDDSA (yubico-piv-tool 2.7.2), so the OpenSSL PKCS#11
+    # provider finds no mechanism. Version 2.7.3 of Debian forky, from
+    # snapshot.debian.org, checked by its SHA-256 (it only needs Debian 13).
+    && base=https://snapshot.debian.org/archive/debian/20260909T142347Z/pool/main/y/yubico-piv-tool \
+    && for deb in \
+        "libykpiv2 b5fb16770a65c5dcf829a7513193280145247ebfc8cee0dbd305f9b35e510d06" \
+        "ykcs11 5454dccc3af9c54b866a3ee5ff7498a3a62f326a3f9aaca9a7bc2b1bf0481d85" \
+        "yubico-piv-tool 4a4c358b29382a2058dcbde1e572e49f0f45f65fdada5c56723129de006eda94"; do \
+        set -- $deb; \
+        /usr/lib/apt/apt-helper download-file "$base/${1}_2.7.3-2_amd64.deb" "/tmp/$1.deb" "SHA256:$2" \
+            || exit 1; \
+    done \
+    && dpkg -i /tmp/libykpiv2.deb /tmp/ykcs11.deb /tmp/yubico-piv-tool.deb \
+    && rm /tmp/*.deb \
     && rm -rf /var/lib/apt/lists/* \
     # p11-kit loads the PKCS#11 module of the token only (image/pkcs11.sh)
     && rm -f /usr/share/p11-kit/modules/*.module
