@@ -1625,7 +1625,7 @@ publication sont de confiance.</p>
 <tbody>
 <tr>
 <td>Un périphérique USB qui est un clavier, un adaptateur réseau ou un port série (BadUSB)</td>
-<td>USBGuard n'autorise aucun périphérique avant de démarrer, puis seulement le stockage de masse ; claviers et souris sont bloqués ; pas de pilotes réseau USB, Bluetooth, Wi-Fi ni série (<a href="../image/#usb-devices">Périphériques USB</a>)</td>
+<td>USBGuard n'autorise aucun périphérique avant de démarrer, puis seulement le stockage de masse ; claviers et souris sont bloqués ; pas de pilotes réseau USB, Bluetooth, Wi-Fi ni série (<a href="../image/#usb-devices">Périphériques USB</a>) ; chaque périphérique refusé est consigné et envoyé au SIEM (<code>usb_device_blocked</code>)</td>
 </tr>
 <tr>
 <td>Un système de fichiers forgé qui exploite un pilote du noyau</td>

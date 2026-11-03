@@ -1597,7 +1597,9 @@ adaptateur réseau pourrait ouvrir un réseau.</p>
   les périphériques dont toutes les interfaces sont du stockage de masse ;
   il bloque tous les autres, y compris une clé qui a une interface de
   stockage et une autre. Les périphériques bloqués sont listés dans
-  <code>/var/log/usbguard/usbguard-audit.log</code>.</li>
+  <code>/var/log/usbguard/usbguard-audit.log</code>, et la borne signale chacun dans
+  son propre journal par un événement <code>usb_device_blocked</code>, envoyé aussi au
+  SIEM (<a href="../logs/#refused-usb-devices">Périphériques USB refusés</a>).</li>
 <li><strong>Aucun périphérique n'est autorisé avant le démarrage d'USBGuard</strong> : la
   ligne de commande du noyau fixe <code>usbcore.authorized_default=0</code>. Si
   USBGuard ne démarre pas, aucun périphérique USB n'est utilisable.</li>

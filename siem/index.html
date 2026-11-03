@@ -1606,12 +1606,18 @@ syslog message.</p>
 <td>Each file (many entries)</td>
 <td><code>verdict</code>, <code>detail</code>, <code>engines</code>, <code>path</code></td>
 </tr>
+<tr>
+<td><code>usb_device_blocked</code></td>
+<td>A USB device refused by USBGuard: keyboard, network adapter, key that is also a keyboard (<a href="../logs/#refused-usb-devices">Refused USB devices</a>)</td>
+<td><code>usb_id</code>, <code>model</code>, <code>serial</code>, <code>port</code>, <code>interfaces</code>, <code>kinds</code>, <code>composite</code>, <code>rule</code></td>
+</tr>
 </tbody>
 </table>
 <p>Every entry also holds <code>timestamp</code> and <code>kiosk</code> (<code>kiosk.name</code>). <code>report_id</code>
 ties the events of a key together, and to its scan report. <code>device_verdict</code>
 never holds a name of a file; <code>file_scanned</code> and <code>device_inserted</code> hold the
-names of the files and the label and serial number of the key (left out on
+names of the files and the label and serial number of the key,
+<code>usb_device_blocked</code> the name and serial number of the device (left out on
 a <a href="../airgap/#a-stolen-kiosk">station</a>): drop them in the SIEM when they are
 not needed.</p>
 <h3 id="indicators">Indicators<a class="headerlink" href="#indicators" title="Permanent link">&para;</a></h3>
@@ -1655,6 +1661,10 @@ not needed.</p>
 <td>Silent kiosks</td>
 <td>time of the latest entry of each <code>kiosk</code></td>
 </tr>
+<tr>
+<td>Refused USB devices (BadUSB attempts), to alert on</td>
+<td><code>usb_device_blocked</code>, by <code>kinds</code>; <code>composite</code> = <code>true</code> for a key that is also a keyboard</td>
+</tr>
 </tbody>
 </table>
 <h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h3>
@@ -1669,12 +1679,15 @@ event=device_verdict | top limit=10 detections{}
 event=device_verdict | stats avg(duration) perc95(duration) by kiosk
 event=device_verdict verdict=not_verified | table _time kiosk report_id not_scanned
 event=signatures_installed OR event=signatures_changed | stats latest(serial) by kiosk
+event=usb_device_blocked | table _time kiosk usb_id model port kinds{} composite
 </code></pre></div>
 <p><strong>Elastic</strong> (Logstash or Elastic Agent, <code>json</code> codec; ES|QL in Kibana):</p>
 <div class="highlight"><pre><span></span><code>FROM pandora-box-* | WHERE event == "device_verdict"
   | STATS keys = COUNT(*) BY verdict, day = DATE_TRUNC(1 day, @timestamp)
 FROM pandora-box-* | WHERE event == "device_verdict" | MV_EXPAND detections
   | STATS seen = COUNT(*) BY detections | SORT seen DESC | LIMIT 10
+FROM pandora-box-* | WHERE event == "usb_device_blocked"
+  | KEEP @timestamp, kiosk, usb_id, model, port, kinds, composite
 </code></pre></div>
 <p><strong>Graylog</strong> (Syslog TCP input; the JSON of the message decoded by a
 pipeline rule, then searches and aggregation widgets on <code>event:device_verdict</code>,
@@ -1688,12 +1701,24 @@ end
 </code></pre></div>
 <p><strong>Wazuh</strong> (decoded by its JSON decoder): Wazuh only indexes the entries that
 match a rule; a local rule per event to count, then dashboards on
-<code>data.event</code> in OpenSearch Dashboards:</p>
+<code>data.event</code> in OpenSearch Dashboards. A refused USB device raises an alert
+(level 10, 12 for a key that is also another device):</p>
 <div class="highlight"><pre><span></span><code><span class="nt">&lt;group</span><span class="w"> </span><span class="na">name=</span><span class="s">"pandora-box,"</span><span class="nt">&gt;</span>
 <span class="w">  </span><span class="nt">&lt;rule</span><span class="w"> </span><span class="na">id=</span><span class="s">"100100"</span><span class="w"> </span><span class="na">level=</span><span class="s">"3"</span><span class="nt">&gt;</span>
 <span class="w">    </span><span class="nt">&lt;decoded_as&gt;</span>json<span class="nt">&lt;/decoded_as&gt;</span>
 <span class="w">    </span><span class="nt">&lt;field</span><span class="w"> </span><span class="na">name=</span><span class="s">"event"</span><span class="nt">&gt;</span>^device_verdict$<span class="nt">&lt;/field&gt;</span>
 <span class="w">    </span><span class="nt">&lt;description&gt;</span>PandoraBox<span class="w"> </span>$(kiosk):<span class="w"> </span>key<span class="w"> </span>scanned,<span class="w"> </span>$(verdict)<span class="nt">&lt;/description&gt;</span>
+<span class="w">  </span><span class="nt">&lt;/rule&gt;</span>
+<span class="w">  </span><span class="nt">&lt;rule</span><span class="w"> </span><span class="na">id=</span><span class="s">"100110"</span><span class="w"> </span><span class="na">level=</span><span class="s">"10"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;decoded_as&gt;</span>json<span class="nt">&lt;/decoded_as&gt;</span>
+<span class="w">    </span><span class="nt">&lt;field</span><span class="w"> </span><span class="na">name=</span><span class="s">"event"</span><span class="nt">&gt;</span>^usb_device_blocked$<span class="nt">&lt;/field&gt;</span>
+<span class="w">    </span><span class="nt">&lt;description&gt;</span>PandoraBox<span class="w"> </span>$(kiosk):<span class="w"> </span>USB<span class="w"> </span>device<span class="w"> </span>refused,<span class="w"> </span>$(usb_id)<span class="w"> </span>$(model)<span class="w"> </span>on<span class="w"> </span>port<span class="w"> </span>$(port)<span class="nt">&lt;/description&gt;</span>
+<span class="w">    </span><span class="nt">&lt;group&gt;</span>attack,badusb,<span class="nt">&lt;/group&gt;</span>
+<span class="w">  </span><span class="nt">&lt;/rule&gt;</span>
+<span class="w">  </span><span class="nt">&lt;rule</span><span class="w"> </span><span class="na">id=</span><span class="s">"100111"</span><span class="w"> </span><span class="na">level=</span><span class="s">"12"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;if_sid&gt;</span>100110<span class="nt">&lt;/if_sid&gt;</span>
+<span class="w">    </span><span class="nt">&lt;field</span><span class="w"> </span><span class="na">name=</span><span class="s">"composite"</span><span class="nt">&gt;</span>^true$<span class="nt">&lt;/field&gt;</span>
+<span class="w">    </span><span class="nt">&lt;description&gt;</span>PandoraBox<span class="w"> </span>$(kiosk):<span class="w"> </span>USB<span class="w"> </span>key<span class="w"> </span>that<span class="w"> </span>is<span class="w"> </span>also<span class="w"> </span>a<span class="w"> </span>keyboard<span class="w"> </span>or<span class="w"> </span>another<span class="w"> </span>device<span class="w"> </span>(BadUSB)<span class="nt">&lt;/description&gt;</span>
 <span class="w">  </span><span class="nt">&lt;/rule&gt;</span>
 <span class="nt">&lt;/group&gt;</span>
 </code></pre></div>
@@ -1701,6 +1726,7 @@ match a rule; a local rule per event to count, then dashboards on
 parser leaves the lists out, <code>detections</code> among them):</p>
 <div class="highlight"><pre><span></span><code>sum by (verdict) (count_over_time({app="pandora-box"} | json | event="device_verdict" [1d]))
 avg_over_time({app="pandora-box"} | json | event="device_verdict" | unwrap duration [1d])
+sum by (kiosk, usb_id) (count_over_time({app="pandora-box"} | json | event="usb_device_blocked" [1d]))
 </code></pre></div>
 <h2 id="transport">Transport<a class="headerlink" href="#transport" title="Permanent link">&para;</a></h2>
 <table>

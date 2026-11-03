@@ -837,6 +837,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#refused-usb-devices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Périphériques USB refusés
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#export-to-a-siem" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1296,6 +1307,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#refused-usb-devices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Périphériques USB refusés
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#export-to-a-siem" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1363,7 +1385,7 @@ image/maintenance-key.sh<span class="w"> </span>/media/<span class="nv">$USER</s
 <tr>
 <td>Borne</td>
 <td><code>/var/log/pandora-box/pandora-box.log</code></td>
-<td>Lignes JSON : clés insérées et retirées, analyses et leurs verdicts, fichiers infectés, quarantaine et nettoyage, mises à jour des signatures et de l'image, clés de maintenance, erreurs</td>
+<td>Lignes JSON : clés insérées et retirées, périphériques USB refusés par USBGuard, analyses et leurs verdicts, fichiers infectés, quarantaine et nettoyage, mises à jour des signatures et de l'image, clés de maintenance, erreurs</td>
 </tr>
 <tr>
 <td>Rapports d'analyse</td>
@@ -1500,6 +1522,10 @@ redémarre la borne.</p>
 <td>Demande de maintenance refusée</td>
 </tr>
 <tr>
+<td><code>usb_device_blocked</code></td>
+<td>Périphérique USB refusé par USBGuard (voir <a href="#refused-usb-devices">Périphériques USB refusés</a>)</td>
+</tr>
+<tr>
 <td><code>airgap_copied</code>, <code>airgap_failed</code>, <code>airgap_refused</code></td>
 <td>Copie d'une clé vers un serveur (voir <a href="../airgap/">Copie vers un serveur</a>)</td>
 </tr>
@@ -1509,6 +1535,78 @@ redémarre la borne.</p>
 </tr>
 </tbody>
 </table>
+<h2 id="refused-usb-devices">Périphériques USB refusés<a class="headerlink" href="#refused-usb-devices" title="Permanent link">&para;</a></h2>
+<p>USBGuard bloque tout périphérique USB qui n'est pas seulement du stockage :
+un clavier, une souris, un adaptateur réseau, une clé qui est aussi un
+clavier (BadUSB, voir <a href="../image/#usb-devices">Périphériques USB</a>). Son
+journal d'audit n'est lisible que par root et n'est pas envoyé au SIEM : la
+borne le suit (<code>src/pandora_box/usbguard.py</code>) et consigne chaque
+périphérique refusé dans son propre journal, avec les autres événements,
+sous la forme <code>usb_device_blocked</code> (niveau <code>WARNING</code>) :</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Contenu</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>target</code></td>
+<td>Décision d'USBGuard : <code>block</code> (ou <code>reject</code>)</td>
+</tr>
+<tr>
+<td><code>usb_id</code></td>
+<td>Identifiants du fabricant et du produit, <code>fabricant:produit</code></td>
+</tr>
+<tr>
+<td><code>model</code>, <code>serial</code></td>
+<td>Nom et numéro de série donnés par le périphérique</td>
+</tr>
+<tr>
+<td><code>port</code></td>
+<td>Port USB, par exemple <code>1-2</code></td>
+</tr>
+<tr>
+<td><code>interfaces</code></td>
+<td>Interfaces du périphérique, <code>classe:sous-classe:protocole</code></td>
+</tr>
+<tr>
+<td><code>kinds</code></td>
+<td>Nature de ces interfaces : <code>storage</code>, <code>keyboard</code>, <code>mouse</code>, <code>hid</code>, <code>communications</code> (réseau, modem), <code>wireless</code> (Bluetooth), <code>vendor-specific</code>...</td>
+</tr>
+<tr>
+<td><code>composite</code></td>
+<td><code>true</code> pour un périphérique de stockage qui a une autre fonction : une clé qui est aussi un clavier</td>
+</tr>
+<tr>
+<td><code>connect_type</code></td>
+<td><code>hotplug</code> s'il a été branché, sinon présent au démarrage ou interne</td>
+</tr>
+<tr>
+<td><code>system_name</code></td>
+<td>Chemin du périphérique dans sysfs</td>
+</tr>
+<tr>
+<td><code>rule</code></td>
+<td>Règle de périphérique d'USBGuard, à adapter en règle <code>allow</code> (écran tactile, souris)</td>
+</tr>
+<tr>
+<td><code>blocked_at</code></td>
+<td>Heure de la décision d'USBGuard</td>
+</tr>
+</tbody>
+</table>
+<p>Les périphériques bloqués avant le démarrage de la borne (au démarrage du
+système) sont signalés une fois qu'elle a démarré ; la position de la
+dernière ligne lue est enregistrée
+(<code>/var/lib/pandora-box/usbguard-audit.json</code>), si bien qu'un redémarrage de
+la borne ne signale aucun périphérique deux fois. Sur une
+<a href="../airgap/#a-stolen-kiosk">borne de transfert</a>, <code>model</code>, <code>serial</code> et <code>rule</code>
+sont omis.</p>
+<p>Un périphérique que l'opérateur voulait utiliser (une souris) apparaît
+aussi ; une clé refusée en entier (<code>composite</code>), ou un clavier ou un
+adaptateur réseau sur une borne qui n'en a pas, mérite un examen.</p>
 <h2 id="export-to-a-siem">Export vers un SIEM<a class="headerlink" href="#export-to-a-siem" title="Permanent link">&para;</a></h2>
 <p>Une borne en ligne peut envoyer chaque entrée de son journal à un SIEM
 (Wazuh, Elastic, Graylog, Splunk, ou tout serveur syslog), en syslog ou en

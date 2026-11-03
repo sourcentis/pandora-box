@@ -1622,7 +1622,7 @@ trusted.</p>
 <tbody>
 <tr>
 <td>A USB device that is a keyboard, a network adapter or a serial port (BadUSB)</td>
-<td>USBGuard authorizes no device before it starts, then only mass storage; keyboards and mice are blocked; no USB network, Bluetooth, Wi-Fi or serial drivers (<a href="../image/#usb-devices">USB devices</a>)</td>
+<td>USBGuard authorizes no device before it starts, then only mass storage; keyboards and mice are blocked; no USB network, Bluetooth, Wi-Fi or serial drivers (<a href="../image/#usb-devices">USB devices</a>); each refused device is logged and sent to the SIEM (<code>usb_device_blocked</code>)</td>
 </tr>
 <tr>
 <td>A crafted filesystem exploiting a kernel driver</td>

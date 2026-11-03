@@ -837,6 +837,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#refused-usb-devices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Refused USB devices
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#export-to-a-siem" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1296,6 +1307,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#refused-usb-devices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Refused USB devices
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#export-to-a-siem" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1363,7 +1385,7 @@ image/maintenance-key.sh<span class="w"> </span>/media/<span class="nv">$USER</s
 <tr>
 <td>Kiosk</td>
 <td><code>/var/log/pandora-box/pandora-box.log</code></td>
-<td>JSON lines: devices inserted and removed, scans and their verdicts, infected files, quarantine and cleaning, signature and image updates, maintenance devices, errors</td>
+<td>JSON lines: devices inserted and removed, USB devices refused by USBGuard, scans and their verdicts, infected files, quarantine and cleaning, signature and image updates, maintenance devices, errors</td>
 </tr>
 <tr>
 <td>Scan reports</td>
@@ -1497,6 +1519,10 @@ comes last as it restarts the kiosk.</p>
 <td>Maintenance request refused</td>
 </tr>
 <tr>
+<td><code>usb_device_blocked</code></td>
+<td>USB device refused by USBGuard (see <a href="#refused-usb-devices">Refused USB devices</a>)</td>
+</tr>
+<tr>
 <td><code>airgap_copied</code>, <code>airgap_failed</code>, <code>airgap_refused</code></td>
 <td>Copy of a key to a server (see <a href="../airgap/">Copy to a server</a>)</td>
 </tr>
@@ -1506,6 +1532,75 @@ comes last as it restarts the kiosk.</p>
 </tr>
 </tbody>
 </table>
+<h2 id="refused-usb-devices">Refused USB devices<a class="headerlink" href="#refused-usb-devices" title="Permanent link">&para;</a></h2>
+<p>USBGuard blocks every USB device that is not only storage: a keyboard, a
+mouse, a network adapter, a key that is also a keyboard (BadUSB, see
+<a href="../image/#usb-devices">USB devices</a>). Its audit log is readable only by
+root and is not sent to the SIEM: the kiosk follows it
+(<code>src/pandora_box/usbguard.py</code>) and logs each refused device in its own log,
+with the other events, as <code>usb_device_blocked</code> (level <code>WARNING</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>target</code></td>
+<td>Decision of USBGuard: <code>block</code> (or <code>reject</code>)</td>
+</tr>
+<tr>
+<td><code>usb_id</code></td>
+<td>Vendor and product identifiers, <code>vendor:product</code></td>
+</tr>
+<tr>
+<td><code>model</code>, <code>serial</code></td>
+<td>Name and serial number the device gives</td>
+</tr>
+<tr>
+<td><code>port</code></td>
+<td>USB port, e.g. <code>1-2</code></td>
+</tr>
+<tr>
+<td><code>interfaces</code></td>
+<td>Interfaces of the device, <code>class:subclass:protocol</code></td>
+</tr>
+<tr>
+<td><code>kinds</code></td>
+<td>What these interfaces are: <code>storage</code>, <code>keyboard</code>, <code>mouse</code>, <code>hid</code>, <code>communications</code> (network, modem), <code>wireless</code> (Bluetooth), <code>vendor-specific</code>...</td>
+</tr>
+<tr>
+<td><code>composite</code></td>
+<td><code>true</code> for a storage device with another function: a key that is also a keyboard</td>
+</tr>
+<tr>
+<td><code>connect_type</code></td>
+<td><code>hotplug</code> when inserted, else present at boot or internal</td>
+</tr>
+<tr>
+<td><code>system_name</code></td>
+<td>Path of the device in sysfs</td>
+</tr>
+<tr>
+<td><code>rule</code></td>
+<td>Device rule of USBGuard, to adapt into an <code>allow</code> rule (touchscreen, mouse)</td>
+</tr>
+<tr>
+<td><code>blocked_at</code></td>
+<td>Time of the decision of USBGuard</td>
+</tr>
+</tbody>
+</table>
+<p>Devices blocked before the kiosk starts (at boot) are reported once it has
+started; the position of the last line read is saved
+(<code>/var/lib/pandora-box/usbguard-audit.json</code>), so a restart of the kiosk
+reports no device twice. On a <a href="../airgap/#a-stolen-kiosk">station</a>,
+<code>model</code>, <code>serial</code> and <code>rule</code> are left out.</p>
+<p>A device the operator meant to use (a mouse) appears here too; a key
+refused as a whole (<code>composite</code>), or a keyboard or a network adapter on a
+kiosk that has none, deserves a look.</p>
 <h2 id="export-to-a-siem">Export to a SIEM<a class="headerlink" href="#export-to-a-siem" title="Permanent link">&para;</a></h2>
 <p>An online kiosk can send every entry of its log to a SIEM (Wazuh, Elastic,
 Graylog, Splunk, or any syslog server), over syslog or JSON, TLS, TCP or

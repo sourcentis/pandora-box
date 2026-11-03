@@ -1585,7 +1585,9 @@ it draws for (<code>display_started</code>, <code>display_resized</code>).</p>
 <li><strong>USBGuard</strong> (<code>/etc/usbguard/rules.conf</code>) allows hubs and the devices
   whose interfaces are all mass storage; it blocks every other device,
   including a key that has a storage interface and another one. Blocked
-  devices are listed in <code>/var/log/usbguard/usbguard-audit.log</code>.</li>
+  devices are listed in <code>/var/log/usbguard/usbguard-audit.log</code>, and the
+  kiosk reports each one in its own log as a <code>usb_device_blocked</code> event,
+  also sent to the SIEM (<a href="../logs/#refused-usb-devices">Refused USB devices</a>).</li>
 <li><strong>No device is authorized before USBGuard has started</strong>: the kernel
   command line sets <code>usbcore.authorized_default=0</code>. If USBGuard does not
   start, no USB device is usable.</li>
