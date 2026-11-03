@@ -1442,10 +1442,26 @@ than itself:</p>
 <div class="highlight"><pre><span></span><code>openssl<span class="w"> </span>x509<span class="w"> </span>-in<span class="w"> </span>image/release/secure-boot.crt<span class="w"> </span>-noout<span class="w"> </span>-fingerprint<span class="w"> </span>-sha256
 openssl<span class="w"> </span>pkey<span class="w"> </span>-pubin<span class="w"> </span>-in<span class="w"> </span>image/release/update.pem<span class="w"> </span>-outform<span class="w"> </span>DER<span class="w"> </span><span class="p">|</span><span class="w"> </span>sha256sum
 </code></pre></div>
-<div class="admonition important">
-<p class="admonition-title">Important</p>
-<p>The release keys are not created yet: the fingerprints will be given here.</p>
-</div>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>SHA-256 fingerprint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Secure Boot key (<code>secure-boot.crt</code>, certificate)</td>
+<td><code>B0:A3:3D:3E:50:41:67:26:CB:BF:6B:D4:B7:97:7F:2A:0C:D0:C4:C4:F8:2B:C2:75:2A:A5:20:06:AB:84:2C:83</code></td>
+</tr>
+<tr>
+<td>Update key (<code>update.pem</code>, public key in DER)</td>
+<td><code>06d2d2f5e183f7f9bd1ae118df37e8e789aca6153768718cf07d1d3e37c73fb8</code></td>
+</tr>
+</tbody>
+</table>
+<p>Created on 2026-11-03; the Secure Boot certificate is valid until
+2036-10-31 (the firmware of a kiosk does not check it).</p>
 <h3 id="creating-the-keys">Creating the keys<a class="headerlink" href="#creating-the-keys" title="Permanent link">&para;</a></h3>
 <p>Once, on an offline computer. The keys are created in memory, imported into
 <strong>two</strong> YubiKeys, the second one kept in a safe, then erased. A lost Secure
@@ -1495,16 +1511,26 @@ git<span class="w"> </span>add<span class="w"> </span>image/release/secure-boot.
 module: <code>PANDORA_BOX_SECURE_BOOT_KEY</code>, <code>PANDORA_BOX_UPDATE_KEY</code> and
 <code>PANDORA_BOX_PKCS11_MODULE</code> (see <code>image/pkcs11.sh</code>).</p>
 <h2 id="making-a-release">Making a release<a class="headerlink" href="#making-a-release" title="Permanent link">&para;</a></h2>
+<p>The version of a release is its date, in UTC: the tag <code>vYYYY.MM.DD</code>,
+created the day of the release; <code>vYYYY.MM.DD.2</code>, <code>.3</code>… for another release
+the same day, and a suffix (<code>vYYYY.MM.DD-rc1</code>) for a test that is not
+published. <code>image/release.sh</code> refuses any other tag, and a tag whose date is
+not the day it was created. The image version shown by the kiosk is the time
+of the tag, to the second (<code>YYYYMMDDHHMMSS</code>).</p>
 <p>On the build computer, with the YubiKey plugged in and
 <a href="https://cli.github.com/">gh</a> logged in to GitHub:</p>
-<div class="highlight"><pre><span></span><code>git<span class="w"> </span>tag<span class="w"> </span>-a<span class="w"> </span>v1.0.0<span class="w"> </span>-m<span class="w"> </span><span class="s2">"PandoraBox 1.0.0"</span>
-git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>v1.0.0
-image/release.sh<span class="w"> </span>v1.0.0
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>tag<span class="w"> </span>-a<span class="w"> </span>v2026.11.03<span class="w"> </span>-m<span class="w"> </span><span class="s2">"PandoraBox 2026.11.03"</span>
+git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>v2026.11.03
+image/release.sh<span class="w"> </span>v2026.11.03
 </code></pre></div>
 <p><code>image/release.sh</code> asks for the PIN of the YubiKey once, then:</p>
 <ol>
-<li>extracts the files of the tag only (<code>git archive</code>) to <code>release/v1.0.0/src/</code>:
+<li>extracts the files of the tag only (<code>git archive</code>) to <code>release/v2026.11.03/src/</code>:
    no local theme, credentials or development keys get into the image;</li>
+<li>checks the PIN before the build: signs a test message with both keys of
+   the YubiKey and verifies it with the public keys of the tag; a wrong PIN
+   (one try used), a key that cannot sign or another key stops it at once,
+   with the PIN tries left;</li>
 <li>builds the image without profile, signed with the Secure Boot key
    (<code>image/build.sh --release</code>), trusting <code>image/release/update.pem</code>, with
    the inputs of a <a href="#reproducing-a-release">reproducible build</a>;</li>
@@ -1513,7 +1539,7 @@ image/release.sh<span class="w"> </span>v1.0.0
    signs the checksums with the update key, and checks every signature with
    the public keys of the tag;</li>
 <li>creates a <strong>draft</strong> release of the tag on GitHub with the files of
-   <code>release/v1.0.0/assets/</code>.</li>
+   <code>release/v2026.11.03/assets/</code>.</li>
 </ol>
 <table>
 <thead>
@@ -1524,15 +1550,15 @@ image/release.sh<span class="w"> </span>v1.0.0
 </thead>
 <tbody>
 <tr>
-<td><code>pandora-box-v1.0.0.raw.xz</code></td>
+<td><code>pandora-box-v2026.11.03.raw.xz</code></td>
 <td>disk image, to write to the disk of the kiosk</td>
 </tr>
 <tr>
-<td><code>pandora-box-image-v1.0.0.tar</code></td>
+<td><code>pandora-box-image-v2026.11.03.tar</code></td>
 <td>signed image update: <code>pandora-box-image/</code>, to extract at the root of a USB key (<a href="../update/">System updates</a>)</td>
 </tr>
 <tr>
-<td><code>pandora-box-v1.0.0.cdx.json</code></td>
+<td><code>pandora-box-v2026.11.03.cdx.json</code></td>
 <td>software bill of materials (SBOM, CycloneDX 1.5): the Debian and Python packages of the image, with their versions</td>
 </tr>
 <tr>
@@ -1553,7 +1579,10 @@ credentials and settings of an organization, and is not published.</p>
 the slots and labels of the YubiKey:</p>
 <div class="highlight"><pre><span></span><code>image/softhsm-keys.sh<span class="w"> </span>/tmp/token
 cp<span class="w"> </span>/tmp/token/secure-boot.crt<span class="w"> </span>/tmp/token/update.pem<span class="w"> </span>image/release/<span class="w">   </span><span class="c1"># in a test clone only</span>
-<span class="nb">echo</span><span class="w"> </span><span class="m">123456</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="nv">PANDORA_BOX_SOFTHSM</span><span class="o">=</span>/tmp/token<span class="w"> </span>image/release.sh<span class="w"> </span>v0.0.0-test<span class="w"> </span>--no-publish
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"Test keys"</span><span class="w"> </span>image/release/
+<span class="nv">tag</span><span class="o">=</span>v<span class="k">$(</span>date<span class="w"> </span>-u<span class="w"> </span>+%Y.%m.%d<span class="k">)</span>-test
+git<span class="w"> </span>tag<span class="w"> </span>-a<span class="w"> </span><span class="s2">"</span><span class="nv">$tag</span><span class="s2">"</span><span class="w"> </span>-m<span class="w"> </span><span class="s2">"Test release"</span>
+<span class="nb">echo</span><span class="w"> </span><span class="m">123456</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="nv">PANDORA_BOX_SOFTHSM</span><span class="o">=</span>/tmp/token<span class="w"> </span>image/release.sh<span class="w"> </span><span class="s2">"</span><span class="nv">$tag</span><span class="s2">"</span><span class="w"> </span>--no-publish
 </code></pre></div>
 <h2 id="reproducing-a-release">Reproducing a release<a class="headerlink" href="#reproducing-a-release" title="Permanent link">&para;</a></h2>
 <p>The image of a release only depends on its tag: anyone can build it again
@@ -1586,8 +1615,8 @@ and check that it is made of the published source code and Debian packages.
 </tbody>
 </table>
 <p>To check a release, download its files and build its tag again:</p>
-<div class="highlight"><pre><span></span><code>gh<span class="w"> </span>release<span class="w"> </span>download<span class="w"> </span>v1.0.0<span class="w"> </span>-D<span class="w"> </span>/tmp/v1.0.0
-image/reproduce.sh<span class="w"> </span>v1.0.0<span class="w"> </span>/tmp/v1.0.0
+<div class="highlight"><pre><span></span><code>gh<span class="w"> </span>release<span class="w"> </span>download<span class="w"> </span>v2026.11.03<span class="w"> </span>-D<span class="w"> </span>/tmp/v2026.11.03
+image/reproduce.sh<span class="w"> </span>v2026.11.03<span class="w"> </span>/tmp/v2026.11.03
 </code></pre></div>
 <p><code>image/reproduce.sh</code> checks the files with their signed checksums, builds the
 tag with the same inputs, trusting the same update key, but signed with
@@ -1630,7 +1659,7 @@ openssl<span class="w"> </span>pkey<span class="w"> </span>-pubin<span class="w"
 <code>update.pem</code> of a release alone proves nothing, as anyone publishing a fake
 release would give their own. Then write the image
 (<a href="../install/#writing-the-image">Initial installation</a>):</p>
-<div class="highlight"><pre><span></span><code>xz<span class="w"> </span>-dc<span class="w"> </span>pandora-box-v1.0.0.raw.xz<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>dd<span class="w"> </span><span class="nv">of</span><span class="o">=</span>/dev/sdX<span class="w"> </span><span class="nv">bs</span><span class="o">=</span>4M<span class="w"> </span><span class="nv">conv</span><span class="o">=</span>fsync<span class="w"> </span><span class="nv">status</span><span class="o">=</span>progress
+<div class="highlight"><pre><span></span><code>xz<span class="w"> </span>-dc<span class="w"> </span>pandora-box-v2026.11.03.raw.xz<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>dd<span class="w"> </span><span class="nv">of</span><span class="o">=</span>/dev/sdX<span class="w"> </span><span class="nv">bs</span><span class="o">=</span>4M<span class="w"> </span><span class="nv">conv</span><span class="o">=</span>fsync<span class="w"> </span><span class="nv">status</span><span class="o">=</span>progress
 </code></pre></div>
 <p>At its first boot, the kiosk enrolls <code>secure-boot.crt</code> in its firmware. A
 kiosk installed with development keys does not accept the updates of a

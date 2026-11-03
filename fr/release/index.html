@@ -1445,11 +1445,26 @@ source qu'elle-même :</p>
 <div class="highlight"><pre><span></span><code>openssl<span class="w"> </span>x509<span class="w"> </span>-in<span class="w"> </span>image/release/secure-boot.crt<span class="w"> </span>-noout<span class="w"> </span>-fingerprint<span class="w"> </span>-sha256
 openssl<span class="w"> </span>pkey<span class="w"> </span>-pubin<span class="w"> </span>-in<span class="w"> </span>image/release/update.pem<span class="w"> </span>-outform<span class="w"> </span>DER<span class="w"> </span><span class="p">|</span><span class="w"> </span>sha256sum
 </code></pre></div>
-<div class="admonition important">
-<p class="admonition-title">Important</p>
-<p>Les clés de publication ne sont pas encore créées : leurs empreintes
-seront données ici.</p>
-</div>
+<table>
+<thead>
+<tr>
+<th>Clé</th>
+<th>Empreinte SHA-256</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Clé Secure Boot (<code>secure-boot.crt</code>, certificat)</td>
+<td><code>B0:A3:3D:3E:50:41:67:26:CB:BF:6B:D4:B7:97:7F:2A:0C:D0:C4:C4:F8:2B:C2:75:2A:A5:20:06:AB:84:2C:83</code></td>
+</tr>
+<tr>
+<td>Clé de mise à jour (<code>update.pem</code>, clé publique en DER)</td>
+<td><code>06d2d2f5e183f7f9bd1ae118df37e8e789aca6153768718cf07d1d3e37c73fb8</code></td>
+</tr>
+</tbody>
+</table>
+<p>Créées le 2026-11-03 ; le certificat Secure Boot est valide jusqu'au
+2036-10-31 (le micrologiciel d'une borne ne le vérifie pas).</p>
 <h3 id="creating-the-keys">Créer les clés<a class="headerlink" href="#creating-the-keys" title="Permanent link">&para;</a></h3>
 <p>Une seule fois, sur un ordinateur hors ligne. Les clés sont créées en
 mémoire, importées dans <strong>deux</strong> YubiKeys, la seconde gardée dans un coffre,
@@ -1501,17 +1516,27 @@ git<span class="w"> </span>add<span class="w"> </span>image/release/secure-boot.
 et le module : <code>PANDORA_BOX_SECURE_BOOT_KEY</code>, <code>PANDORA_BOX_UPDATE_KEY</code> et
 <code>PANDORA_BOX_PKCS11_MODULE</code> (voir <code>image/pkcs11.sh</code>).</p>
 <h2 id="making-a-release">Publier une version<a class="headerlink" href="#making-a-release" title="Permanent link">&para;</a></h2>
+<p>Le numéro d'une version est sa date, en UTC : le tag <code>vAAAA.MM.JJ</code>, créé le
+jour de la publication ; <code>vAAAA.MM.JJ.2</code>, <code>.3</code>… pour une autre version le
+même jour, et un suffixe (<code>vAAAA.MM.JJ-rc1</code>) pour un essai qui n'est pas
+publié. <code>image/release.sh</code> refuse tout autre tag, ainsi qu'un tag dont la
+date n'est pas le jour de sa création. La version de l'image affichée par la
+borne est l'heure du tag, à la seconde (<code>AAAAMMJJHHMMSS</code>).</p>
 <p>Sur l'ordinateur de construction, avec la YubiKey branchée et
 <a href="https://cli.github.com/">gh</a> connecté à GitHub :</p>
-<div class="highlight"><pre><span></span><code>git<span class="w"> </span>tag<span class="w"> </span>-a<span class="w"> </span>v1.0.0<span class="w"> </span>-m<span class="w"> </span><span class="s2">"PandoraBox 1.0.0"</span>
-git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>v1.0.0
-image/release.sh<span class="w"> </span>v1.0.0
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>tag<span class="w"> </span>-a<span class="w"> </span>v2026.11.03<span class="w"> </span>-m<span class="w"> </span><span class="s2">"PandoraBox 2026.11.03"</span>
+git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>v2026.11.03
+image/release.sh<span class="w"> </span>v2026.11.03
 </code></pre></div>
 <p><code>image/release.sh</code> demande une fois le PIN de la YubiKey, puis :</p>
 <ol>
 <li>extrait les seuls fichiers du tag (<code>git archive</code>) dans
-   <code>release/v1.0.0/src/</code> : aucun thème local, identifiant ou clé de
+   <code>release/v2026.11.03/src/</code> : aucun thème local, identifiant ou clé de
    développement n'entre dans l'image ;</li>
+<li>vérifie le PIN avant la construction : signe un message de test avec les
+   deux clés de la YubiKey et le vérifie avec les clés publiques du tag ; un
+   mauvais PIN (un essai consommé), une clé qui ne signe pas ou une autre clé
+   l'arrête aussitôt, avec les essais de PIN restants ;</li>
 <li>construit l'image sans profil, signée avec la clé Secure Boot
    (<code>image/build.sh --release</code>), qui fait confiance à
    <code>image/release/update.pem</code>, avec les entrées d'une
@@ -1521,7 +1546,7 @@ image/release.sh<span class="w"> </span>v1.0.0
    logicielle, signe les sommes de contrôle avec la clé de mise à jour, et
    vérifie chaque signature avec les clés publiques du tag ;</li>
 <li>crée un <strong>brouillon</strong> de version du tag sur GitHub avec les fichiers de
-   <code>release/v1.0.0/assets/</code>.</li>
+   <code>release/v2026.11.03/assets/</code>.</li>
 </ol>
 <table>
 <thead>
@@ -1532,15 +1557,15 @@ image/release.sh<span class="w"> </span>v1.0.0
 </thead>
 <tbody>
 <tr>
-<td><code>pandora-box-v1.0.0.raw.xz</code></td>
+<td><code>pandora-box-v2026.11.03.raw.xz</code></td>
 <td>image disque, à écrire sur le disque de la borne</td>
 </tr>
 <tr>
-<td><code>pandora-box-image-v1.0.0.tar</code></td>
+<td><code>pandora-box-image-v2026.11.03.tar</code></td>
 <td>mise à jour signée de l'image : <code>pandora-box-image/</code>, à extraire à la racine d'une clé USB (<a href="../update/">Mises à jour du système</a>)</td>
 </tr>
 <tr>
-<td><code>pandora-box-v1.0.0.cdx.json</code></td>
+<td><code>pandora-box-v2026.11.03.cdx.json</code></td>
 <td>nomenclature logicielle (SBOM, CycloneDX 1.5) : les paquets Debian et Python de l'image, avec leurs versions</td>
 </tr>
 <tr>
@@ -1562,7 +1587,10 @@ publié.</p>
 test dans les emplacements et sous les noms de la YubiKey :</p>
 <div class="highlight"><pre><span></span><code>image/softhsm-keys.sh<span class="w"> </span>/tmp/token
 cp<span class="w"> </span>/tmp/token/secure-boot.crt<span class="w"> </span>/tmp/token/update.pem<span class="w"> </span>image/release/<span class="w">   </span><span class="c1"># dans un clone de test seulement</span>
-<span class="nb">echo</span><span class="w"> </span><span class="m">123456</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="nv">PANDORA_BOX_SOFTHSM</span><span class="o">=</span>/tmp/token<span class="w"> </span>image/release.sh<span class="w"> </span>v0.0.0-test<span class="w"> </span>--no-publish
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"Test keys"</span><span class="w"> </span>image/release/
+<span class="nv">tag</span><span class="o">=</span>v<span class="k">$(</span>date<span class="w"> </span>-u<span class="w"> </span>+%Y.%m.%d<span class="k">)</span>-test
+git<span class="w"> </span>tag<span class="w"> </span>-a<span class="w"> </span><span class="s2">"</span><span class="nv">$tag</span><span class="s2">"</span><span class="w"> </span>-m<span class="w"> </span><span class="s2">"Test release"</span>
+<span class="nb">echo</span><span class="w"> </span><span class="m">123456</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="nv">PANDORA_BOX_SOFTHSM</span><span class="o">=</span>/tmp/token<span class="w"> </span>image/release.sh<span class="w"> </span><span class="s2">"</span><span class="nv">$tag</span><span class="s2">"</span><span class="w"> </span>--no-publish
 </code></pre></div>
 <h2 id="reproducing-a-release">Reproduire une version<a class="headerlink" href="#reproducing-a-release" title="Permanent link">&para;</a></h2>
 <p>L'image d'une version ne dépend que de son tag : chacun peut la construire à
@@ -1597,8 +1625,8 @@ construction :</p>
 </table>
 <p>Pour vérifier une version, téléchargez ses fichiers et construisez à nouveau
 son tag :</p>
-<div class="highlight"><pre><span></span><code>gh<span class="w"> </span>release<span class="w"> </span>download<span class="w"> </span>v1.0.0<span class="w"> </span>-D<span class="w"> </span>/tmp/v1.0.0
-image/reproduce.sh<span class="w"> </span>v1.0.0<span class="w"> </span>/tmp/v1.0.0
+<div class="highlight"><pre><span></span><code>gh<span class="w"> </span>release<span class="w"> </span>download<span class="w"> </span>v2026.11.03<span class="w"> </span>-D<span class="w"> </span>/tmp/v2026.11.03
+image/reproduce.sh<span class="w"> </span>v2026.11.03<span class="w"> </span>/tmp/v2026.11.03
 </code></pre></div>
 <p><code>image/reproduce.sh</code> vérifie les fichiers avec leurs sommes de contrôle
 signées, construit le tag avec les mêmes entrées, en faisant confiance à la
@@ -1644,7 +1672,7 @@ openssl<span class="w"> </span>pkey<span class="w"> </span>-pubin<span class="w"
 <code>update.pem</code> d'une version ne prouve rien à lui seul, car quiconque
 publierait une fausse version donnerait le sien. Écrivez ensuite l'image
 (<a href="../install/#writing-the-image">Installation initiale</a>) :</p>
-<div class="highlight"><pre><span></span><code>xz<span class="w"> </span>-dc<span class="w"> </span>pandora-box-v1.0.0.raw.xz<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>dd<span class="w"> </span><span class="nv">of</span><span class="o">=</span>/dev/sdX<span class="w"> </span><span class="nv">bs</span><span class="o">=</span>4M<span class="w"> </span><span class="nv">conv</span><span class="o">=</span>fsync<span class="w"> </span><span class="nv">status</span><span class="o">=</span>progress
+<div class="highlight"><pre><span></span><code>xz<span class="w"> </span>-dc<span class="w"> </span>pandora-box-v2026.11.03.raw.xz<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>dd<span class="w"> </span><span class="nv">of</span><span class="o">=</span>/dev/sdX<span class="w"> </span><span class="nv">bs</span><span class="o">=</span>4M<span class="w"> </span><span class="nv">conv</span><span class="o">=</span>fsync<span class="w"> </span><span class="nv">status</span><span class="o">=</span>progress
 </code></pre></div>
 <p>À son premier démarrage, la borne inscrit <code>secure-boot.crt</code> dans son
 firmware. Une borne installée avec des clés de développement n'accepte pas
