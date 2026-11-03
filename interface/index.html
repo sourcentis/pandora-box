@@ -1469,11 +1469,23 @@ cleaning, once the files to remove are listed.</p>
 </tr>
 <tr>
 <td><code>not_verified</code></td>
-<td>Files that could not be scanned (<code>scan.on_error = "block"</code>), or a key removed or enumerated again during its scan: the key must not be used</td>
+<td>Files that could not be scanned (<code>scan.on_error = "block"</code>): the key must not be used</td>
+</tr>
+<tr>
+<td><code>key_changed</code></td>
+<td>The key was removed or enumerated again during its scan (a suspicious behavior): not verified, the key must not be used</td>
 </tr>
 <tr>
 <td><code>error</code></td>
 <td>The key could not be mounted or read</td>
+</tr>
+<tr>
+<td><code>refused</code></td>
+<td>A USB device refused by USBGuard that is not a USB key (keyboard, mouse, network adapter...), with the name and identifiers it gives</td>
+</tr>
+<tr>
+<td><code>refused_composite</code></td>
+<td>A USB key refused by USBGuard because it is also another device (a keyboard): it must not be used, and is handed to the IT department</td>
 </tr>
 <tr>
 <td><code>service</code></td>
@@ -1484,6 +1496,12 @@ cleaning, once the files to remove are listed.</p>
 <p>A result (scan, maintenance or update device) stays on the screen until the
 key is removed, then <code>display.return_seconds</code> more (5 seconds by default)
 before the waiting screen. Inserting another key shows its scan at once.</p>
+<p>A refused device is explained as soon as USBGuard blocks it (the kiosk
+follows its audit log, see <a href="../logs/#refused-usb-devices">Refused USB devices</a>),
+until it is removed. Only the devices inserted while the kiosk runs are
+shown: those present at boot and the internal ones (<code>hardwired</code>) are only
+logged. While a key is inserted, its screen stays: the refusal is only
+logged.</p>
 <h2 id="how-it-is-drawn">How it is drawn<a class="headerlink" href="#how-it-is-drawn" title="Permanent link">&para;</a></h2>
 <p>The screens are drawn with <a href="https://python-pillow.org/">Pillow</a> and copied
 into the Linux framebuffer (<code>display.framebuffer</code>, <code>/dev/fb0</code>): no display

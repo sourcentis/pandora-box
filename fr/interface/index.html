@@ -1470,11 +1470,23 @@ listés.</p>
 </tr>
 <tr>
 <td><code>not_verified</code></td>
-<td>Des fichiers n'ont pas pu être analysés (<code>scan.on_error = "block"</code>), ou la clé a été retirée ou énumérée à nouveau pendant son analyse : la clé ne doit pas être utilisée</td>
+<td>Des fichiers n'ont pas pu être analysés (<code>scan.on_error = "block"</code>) : la clé ne doit pas être utilisée</td>
+</tr>
+<tr>
+<td><code>key_changed</code></td>
+<td>La clé a été retirée ou énumérée à nouveau pendant son analyse (comportement suspect) : non vérifiée, la clé ne doit pas être utilisée</td>
 </tr>
 <tr>
 <td><code>error</code></td>
 <td>La clé n'a pas pu être montée ou lue</td>
+</tr>
+<tr>
+<td><code>refused</code></td>
+<td>Un périphérique USB refusé par USBGuard qui n'est pas une clé USB (clavier, souris, adaptateur réseau...), avec le nom et les identifiants qu'il donne</td>
+</tr>
+<tr>
+<td><code>refused_composite</code></td>
+<td>Une clé USB refusée par USBGuard parce qu'elle est aussi un autre périphérique (un clavier) : elle ne doit pas être utilisée, et est remise au service informatique</td>
 </tr>
 <tr>
 <td><code>service</code></td>
@@ -1486,6 +1498,12 @@ listés.</p>
 jusqu'au retrait de la clé, puis encore <code>display.return_seconds</code> (5 secondes
 par défaut) avant l'écran d'attente. Insérer une autre clé affiche aussitôt
 son analyse.</p>
+<p>Un périphérique refusé est expliqué dès qu'USBGuard le bloque (la borne suit
+son journal d'audit, voir <a href="../logs/#refused-usb-devices">Périphériques USB refusés</a>),
+jusqu'à son retrait. Seuls les périphériques branchés pendant que la borne
+fonctionne sont affichés : ceux présents au démarrage et les périphériques
+internes (<code>hardwired</code>) sont seulement consignés. Quand une clé est insérée,
+son écran reste : le refus est seulement consigné.</p>
 <h2 id="how-it-is-drawn">Comment l'interface est dessinée<a class="headerlink" href="#how-it-is-drawn" title="Permanent link">&para;</a></h2>
 <p>Les écrans sont dessinés avec <a href="https://python-pillow.org/">Pillow</a> et copiés
 dans le framebuffer Linux (<code>display.framebuffer</code>, <code>/dev/fb0</code>) : pas de
