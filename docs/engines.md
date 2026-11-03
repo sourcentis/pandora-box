@@ -286,6 +286,19 @@ then **clean**. The kiosk then applies:
 Files that could not be scanned are listed but **never removed**: they are not
 known to be malicious.
 
+A key removed, or enumerated again as a USB device, during its scan is a
+**suspicious behavior**: it may have disconnected itself to come back with
+another content or as another device (BadUSB). The kiosk checks the USB
+device of the key (its sysfs path and device number) before each partition,
+every second during the scan and before the verdict. Such a key is **not
+verified, whatever `scan.on_error`**: it is neither cleaned, nor copied to a
+server, nor quarantined, and the kiosk shows the `key_changed` screen. The
+behavior (`removed` or `enumerated_again`) is logged
+(`device_suspicious_behavior`), in `device_verdict` and in the report
+(`verdict.suspicious_behaviors`, with its reason in
+`verdict.incomplete_reasons`). The infected files found before stay in the
+report.
+
 ### Keys with several partitions
 
 A key is scanned as a whole: all its partitions make one insertion, one

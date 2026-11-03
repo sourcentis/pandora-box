@@ -10,9 +10,11 @@ Le code est dans le paquet `pandora_box` (`src/pandora_box/`) :
 | `config.py` | Configuration TOML, validée au démarrage |
 | `statemachine.py`, `kiosk.py` | Machine à états et déroulement de la borne |
 | `monitor.py` | Détection USB avec udev |
+| `usbguard.py` | Périphériques USB refusés par USBGuard, lus dans son journal d'audit : consignés et expliqués à l'écran |
 | `device.py` | Montage durci (`ro,noexec,nosuid,nodev` sur un périphérique bloc en lecture seule, lecture-écriture seulement pour nettoyer) |
 | `fuse.py` | NTFS, exFAT et ext4 lus par des pilotes FUSE dans le bac à sable, avec un chien de garde |
 | `inventory.py` | Inventaire de la clé : ne suit jamais les liens, ne quitte jamais la clé, limites |
+| `results.py` | Résultats d'une analyse : résultat de chaque fichier et synthèse de la clé |
 | `scanner.py`, `workers.py`, `worker.py` | Analyse dans des processus surveillés, délais et chien de garde |
 | `sigsets.py`, `publish.py` | Jeux de signatures signés : vérification, installation, publication depuis les sources, commande `pandora-box-signatures` |
 | `sandbox.py`, `seccomp.py`, `protocol.py` | Bac à sable des processus d'analyse (bubblewrap, utilisateur dédié, filtre d'appels système), messages JSON validés venant des processus |
@@ -24,8 +26,12 @@ Le code est dans le paquet `pandora_box` (`src/pandora_box/`) :
 | `signatures.py` | Provenance et fraîcheur des signatures |
 | `quarantine.py` | Copie des fichiers infectés avec un manifeste qui renvoie au rapport |
 | `imageupdate.py`, `maintenance.py` | Mises à jour A/B de l'image, clés de maintenance (export des journaux) |
+| `online.py` | Mises à jour des signatures en ligne (`pandora-box-update.service`) |
+| `siem.py`, `follow.py` | Export des journaux vers un SIEM (`pandora-box-siem.service`) ; suivi d'un fichier journal à travers ses rotations, utilisé aussi pour le journal d'audit d'USBGuard |
+| `airgap.py`, `remotes.py`, `keyid.py`, `keyfs.py` | Copie vers un serveur (bornes de transfert) : déroulement et service `pandora-box-airgap`, miroir par rsync ou SFTP, identifiant signé écrit sur les clés, limites des systèmes de fichiers des clés |
 | `ui/` | Interface graphique de la borne (framebuffer, thèmes), interfaces curses (administrateur) et console |
 | `logs.py`, `lock.py` | Journaux JSON, verrou d'instance unique |
+| `text.py` | Chaînes non fiables (noms de fichiers, libellés des clés) rendues affichables et échappées |
 
 Les fichiers de déploiement sont dans `packaging/` : configuration, services systemd, tmpfiles, sysusers et logrotate.
 

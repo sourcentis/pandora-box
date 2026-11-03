@@ -82,7 +82,10 @@ the virtio console:
    overwritten are mounted, but a file or the folders cannot be read: the key
    is reported not verified (`image/vm/keys.py`; exfat and NTFS have no tool
    writing files without mounting them: they are formatted in the container,
-   then filled by the FUSE drivers of the machine, the kiosk stopped);
+   then filled by the FUSE drivers of the machine, the kiosk stopped); a key
+   of 4000 files removed during its scan is a suspicious behavior
+   (`device_suspicious_behavior`, `removed`): not verified, the `key_changed`
+   screen shown, the behavior in its report;
 10. a signature update key with a newer set (serial 2) is installed, the
     engines are reloaded and the new sample it detects is found; a modified
     set, a set signed with another key and an older set are refused; a newer

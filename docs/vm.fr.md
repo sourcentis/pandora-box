@@ -89,7 +89,10 @@ de l'utilisateur, par QMP et par le shell de la console virtio :
    dossiers ne peuvent pas être lus : la clé est déclarée non vérifiée
    (`image/vm/keys.py` ; exFAT et NTFS n'ont pas d'outil qui écrit des
    fichiers sans les monter : elles sont formatées dans le conteneur, puis
-   remplies par les pilotes FUSE de la machine, la borne arrêtée) ;
+   remplies par les pilotes FUSE de la machine, la borne arrêtée) ; une clé
+   de 4000 fichiers retirée pendant son analyse est un comportement suspect
+   (`device_suspicious_behavior`, `removed`) : non vérifiée, l'écran
+   `key_changed` affiché, le comportement dans son rapport ;
 10. une clé de mise à jour des signatures avec un jeu plus récent (numéro de
     série 2) est installée, les moteurs sont rechargés et le nouvel
     échantillon qu'il détecte est trouvé ; un jeu modifié, un jeu signé avec

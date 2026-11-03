@@ -10,9 +10,11 @@ The code is in the `pandora_box` package (`src/pandora_box/`):
 | `config.py` | TOML configuration, validated at startup |
 | `statemachine.py`, `kiosk.py` | State machine and kiosk workflow |
 | `monitor.py` | USB detection with udev |
+| `usbguard.py` | USB devices refused by USBGuard, read from its audit log: logged, and explained on the screen |
 | `device.py` | Hardened mounting (`ro,noexec,nosuid,nodev` on a read-only block device, read-write only to clean) |
 | `fuse.py` | NTFS, exFAT and ext4 read by FUSE drivers in the sandbox, with a watchdog |
 | `inventory.py` | Device inventory: never follows links, never leaves the device, limits |
+| `results.py` | Results of a scan: file results and device summary |
 | `scanner.py`, `workers.py`, `worker.py` | Scan in supervised worker processes, timeouts and watchdog |
 | `sigsets.py`, `publish.py` | Signed signature sets: verification, installation, publication from the sources, `pandora-box-signatures` command |
 | `sandbox.py`, `seccomp.py`, `protocol.py` | Worker sandbox (bubblewrap, dedicated user, system call filter), validated JSON messages from the workers |
@@ -24,8 +26,12 @@ The code is in the `pandora_box` package (`src/pandora_box/`):
 | `signatures.py` | Signature provenance and freshness |
 | `quarantine.py` | Copy of infected files with a manifest referencing the report |
 | `imageupdate.py`, `maintenance.py` | A/B image updates, maintenance devices (log export) |
+| `online.py` | Online signature updates (`pandora-box-update.service`) |
+| `siem.py`, `follow.py` | Log export to a SIEM (`pandora-box-siem.service`); following a log file across its rotations, also used for the audit log of USBGuard |
+| `airgap.py`, `remotes.py`, `keyid.py`, `keyfs.py` | Copy to a server (stations): workflow and `pandora-box-airgap` service, mirror over rsync or SFTP, signed identifier written on the keys, limits of the filesystems of the keys |
 | `ui/` | Graphical kiosk interface (framebuffer, themes), curses (administrator) and console interfaces |
 | `logs.py`, `lock.py` | JSON logs, single-instance lock |
+| `text.py` | Untrusted strings (file names, device labels) made printable and escaped |
 
 Deployment files are in `packaging/`: configuration, systemd services, tmpfiles, sysusers and logrotate.
 
