@@ -126,6 +126,7 @@ event=device_verdict | top limit=10 detections{}
 event=device_verdict | stats avg(duration) perc95(duration) by kiosk
 event=device_verdict verdict=not_verified | table _time kiosk report_id not_scanned
 event=signatures_installed OR event=signatures_changed | stats latest(serial) by kiosk
+event=usb_device_blocked | table _time kiosk usb_id model port kinds{} composite
 ```
 
 **Elastic** (Logstash or Elastic Agent, `json` codec; ES|QL in Kibana):
@@ -135,6 +136,8 @@ FROM pandora-box-* | WHERE event == "device_verdict"
   | STATS keys = COUNT(*) BY verdict, day = DATE_TRUNC(1 day, @timestamp)
 FROM pandora-box-* | WHERE event == "device_verdict" | MV_EXPAND detections
   | STATS seen = COUNT(*) BY detections | SORT seen DESC | LIMIT 10
+FROM pandora-box-* | WHERE event == "usb_device_blocked"
+  | KEEP @timestamp, kiosk, usb_id, model, port, kinds, composite
 ```
 
 **Graylog** (Syslog TCP input; the JSON of the message decoded by a
@@ -152,7 +155,8 @@ end
 
 **Wazuh** (decoded by its JSON decoder): Wazuh only indexes the entries that
 match a rule; a local rule per event to count, then dashboards on
-`data.event` in OpenSearch Dashboards:
+`data.event` in OpenSearch Dashboards. A refused USB device raises an alert
+(level 10, 12 for a key that is also another device):
 
 ```xml
 <group name="pandora-box,">
@@ -160,6 +164,17 @@ match a rule; a local rule per event to count, then dashboards on
     <decoded_as>json</decoded_as>
     <field name="event">^device_verdict$</field>
     <description>PandoraBox $(kiosk): key scanned, $(verdict)</description>
+  </rule>
+  <rule id="100110" level="10">
+    <decoded_as>json</decoded_as>
+    <field name="event">^usb_device_blocked$</field>
+    <description>PandoraBox $(kiosk): USB device refused, $(usb_id) $(model) on port $(port)</description>
+    <group>attack,badusb,</group>
+  </rule>
+  <rule id="100111" level="12">
+    <if_sid>100110</if_sid>
+    <field name="composite">^true$</field>
+    <description>PandoraBox $(kiosk): USB key that is also a keyboard or another device (BadUSB)</description>
   </rule>
 </group>
 ```
@@ -170,6 +185,7 @@ parser leaves the lists out, `detections` among them):
 ```text
 sum by (verdict) (count_over_time({app="pandora-box"} | json | event="device_verdict" [1d]))
 avg_over_time({app="pandora-box"} | json | event="device_verdict" | unwrap duration [1d])
+sum by (kiosk, usb_id) (count_over_time({app="pandora-box"} | json | event="usb_device_blocked" [1d]))
 ```
 
 ## Transport

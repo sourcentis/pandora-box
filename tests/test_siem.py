@@ -12,11 +12,12 @@ from pathlib import Path
 
 import pytest
 
-from pandora_box import siem
+from pandora_box import siem, usbguard
 from pandora_box.config import ConfigError, SiemConfig, parse_config
 from pandora_box.follow import LogFollower, Position, load_position, save_position
 from pandora_box.logs import get_logger, log_event, setup_logging
 from pandora_box.siem import Sender, frame, syslog_message
+from pandora_box.usbguard import AuditWatcher
 
 ENTRY = (
     b'{"timestamp": "2026-10-14T10:25:32.123456+00:00", "level": "WARNING", '
@@ -246,6 +247,39 @@ def test_run_over_tcp(tmp_path: Path, log: Path) -> None:
         service.close()
         server.close()
     assert events(server.messages()) == ["scan_started", "device_verdict", "device_removed"]
+
+
+def test_refused_usb_device_sent(
+    tmp_path: Path, log: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # A device refused by USBGuard, from its audit log to the SIEM
+    monkeypatch.setattr(usbguard, "POLL_SECONDS", 0.01)
+    audit = tmp_path / "usbguard-audit.log"
+    audit.write_text(
+        '[1730638380.123] (A) uid=0 pid=708 device.rule=\'block id 046d:c31c serial "" '
+        'name "USB Keyboard" via-port "1-2" with-interface { 08:06:50 03:01:01 } '
+        "with-connect-type \"hotplug\"' device.system_name='/devices/usb1/1-2' "
+        "result='SUCCESS' target.new='block' target.old='block' type='Policy.Device.Update' \n"
+    )
+    watcher = AuditWatcher(audit, tmp_path / "audit-state.json")
+    watcher.start()
+    server = StreamServer()
+    config = SiemConfig(enabled=True, host="127.0.0.1", port=server.port, transport="tcp")
+    service = Service(config, log, tmp_path / "state.json")
+    try:
+        wait_until(lambda: len(server.messages()) == 1)
+    finally:
+        watcher.stop()
+        service.close()
+        server.close()
+    (message,) = server.messages()
+    # local0 (16) * 8 + warning (4), the event as MSGID
+    assert message.startswith(b"<132>1 ")
+    assert b" kiosk-01 pandora-box - usb_device_blocked - {" in message
+    entry = json.loads(message.split(b" - ", 2)[2])
+    assert entry["usb_id"] == "046d:c31c"
+    assert entry["kinds"] == ["keyboard", "storage"]
+    assert entry["composite"] is True
 
 
 def test_run_while_siem_is_down(tmp_path: Path, log: Path) -> None:
