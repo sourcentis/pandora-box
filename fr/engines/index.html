@@ -2001,6 +2001,19 @@ ensuite :</p>
 </table>
 <p>Les fichiers qui n'ont pas pu être analysés sont listés mais <strong>jamais
 supprimés</strong> : on ne sait pas s'ils sont malveillants.</p>
+<p>Une clé retirée, ou énumérée à nouveau comme périphérique USB, pendant son
+analyse est un <strong>comportement suspect</strong> : elle a pu se déconnecter d'elle-même
+pour revenir avec un autre contenu ou comme un autre périphérique (BadUSB).
+La borne vérifie le périphérique USB de la clé (son chemin sysfs et son
+numéro de périphérique) avant chaque partition, chaque seconde pendant
+l'analyse et avant le verdict. Une telle clé est <strong>non vérifiée, quel que
+soit <code>scan.on_error</code></strong> : elle n'est ni nettoyée, ni copiée vers un serveur,
+ni mise en quarantaine, et la borne affiche l'écran <code>key_changed</code>. Le
+comportement (<code>removed</code> ou <code>enumerated_again</code>) est consigné
+(<code>device_suspicious_behavior</code>), dans <code>device_verdict</code> et dans le rapport
+(<code>verdict.suspicious_behaviors</code>, avec sa raison dans
+<code>verdict.incomplete_reasons</code>). Les fichiers infectés trouvés avant restent
+dans le rapport.</p>
 <h3 id="keys-with-several-partitions">Clés à plusieurs partitions<a class="headerlink" href="#keys-with-several-partitions" title="Permanent link">&para;</a></h3>
 <p>Une clé est analysée comme un tout : toutes ses partitions forment une seule
 insertion, un seul verdict, un seul rapport et une seule confirmation. La

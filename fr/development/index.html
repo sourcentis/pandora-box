@@ -1387,6 +1387,10 @@
 <td>Détection USB avec udev</td>
 </tr>
 <tr>
+<td><code>usbguard.py</code></td>
+<td>Périphériques USB refusés par USBGuard, lus dans son journal d'audit : consignés et expliqués à l'écran</td>
+</tr>
+<tr>
 <td><code>device.py</code></td>
 <td>Montage durci (<code>ro,noexec,nosuid,nodev</code> sur un périphérique bloc en lecture seule, lecture-écriture seulement pour nettoyer)</td>
 </tr>
@@ -1397,6 +1401,10 @@
 <tr>
 <td><code>inventory.py</code></td>
 <td>Inventaire de la clé : ne suit jamais les liens, ne quitte jamais la clé, limites</td>
+</tr>
+<tr>
+<td><code>results.py</code></td>
+<td>Résultats d'une analyse : résultat de chaque fichier et synthèse de la clé</td>
 </tr>
 <tr>
 <td><code>scanner.py</code>, <code>workers.py</code>, <code>worker.py</code></td>
@@ -1443,12 +1451,28 @@
 <td>Mises à jour A/B de l'image, clés de maintenance (export des journaux)</td>
 </tr>
 <tr>
+<td><code>online.py</code></td>
+<td>Mises à jour des signatures en ligne (<code>pandora-box-update.service</code>)</td>
+</tr>
+<tr>
+<td><code>siem.py</code>, <code>follow.py</code></td>
+<td>Export des journaux vers un SIEM (<code>pandora-box-siem.service</code>) ; suivi d'un fichier journal à travers ses rotations, utilisé aussi pour le journal d'audit d'USBGuard</td>
+</tr>
+<tr>
+<td><code>airgap.py</code>, <code>remotes.py</code>, <code>keyid.py</code>, <code>keyfs.py</code></td>
+<td>Copie vers un serveur (bornes de transfert) : déroulement et service <code>pandora-box-airgap</code>, miroir par rsync ou SFTP, identifiant signé écrit sur les clés, limites des systèmes de fichiers des clés</td>
+</tr>
+<tr>
 <td><code>ui/</code></td>
 <td>Interface graphique de la borne (framebuffer, thèmes), interfaces curses (administrateur) et console</td>
 </tr>
 <tr>
 <td><code>logs.py</code>, <code>lock.py</code></td>
 <td>Journaux JSON, verrou d'instance unique</td>
+</tr>
+<tr>
+<td><code>text.py</code></td>
+<td>Chaînes non fiables (noms de fichiers, libellés des clés) rendues affichables et échappées</td>
 </tr>
 </tbody>
 </table>

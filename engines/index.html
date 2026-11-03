@@ -1960,6 +1960,18 @@ then <strong>clean</strong>. The kiosk then applies:</p>
 </table>
 <p>Files that could not be scanned are listed but <strong>never removed</strong>: they are not
 known to be malicious.</p>
+<p>A key removed, or enumerated again as a USB device, during its scan is a
+<strong>suspicious behavior</strong>: it may have disconnected itself to come back with
+another content or as another device (BadUSB). The kiosk checks the USB
+device of the key (its sysfs path and device number) before each partition,
+every second during the scan and before the verdict. Such a key is <strong>not
+verified, whatever <code>scan.on_error</code></strong>: it is neither cleaned, nor copied to a
+server, nor quarantined, and the kiosk shows the <code>key_changed</code> screen. The
+behavior (<code>removed</code> or <code>enumerated_again</code>) is logged
+(<code>device_suspicious_behavior</code>), in <code>device_verdict</code> and in the report
+(<code>verdict.suspicious_behaviors</code>, with its reason in
+<code>verdict.incomplete_reasons</code>). The infected files found before stay in the
+report.</p>
 <h3 id="keys-with-several-partitions">Keys with several partitions<a class="headerlink" href="#keys-with-several-partitions" title="Permanent link">&para;</a></h3>
 <p>A key is scanned as a whole: all its partitions make one insertion, one
 verdict, one report and one confirmation. The kiosk mounts each filesystem

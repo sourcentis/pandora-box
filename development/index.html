@@ -1387,6 +1387,10 @@
 <td>USB detection with udev</td>
 </tr>
 <tr>
+<td><code>usbguard.py</code></td>
+<td>USB devices refused by USBGuard, read from its audit log: logged, and explained on the screen</td>
+</tr>
+<tr>
 <td><code>device.py</code></td>
 <td>Hardened mounting (<code>ro,noexec,nosuid,nodev</code> on a read-only block device, read-write only to clean)</td>
 </tr>
@@ -1397,6 +1401,10 @@
 <tr>
 <td><code>inventory.py</code></td>
 <td>Device inventory: never follows links, never leaves the device, limits</td>
+</tr>
+<tr>
+<td><code>results.py</code></td>
+<td>Results of a scan: file results and device summary</td>
 </tr>
 <tr>
 <td><code>scanner.py</code>, <code>workers.py</code>, <code>worker.py</code></td>
@@ -1443,12 +1451,28 @@
 <td>A/B image updates, maintenance devices (log export)</td>
 </tr>
 <tr>
+<td><code>online.py</code></td>
+<td>Online signature updates (<code>pandora-box-update.service</code>)</td>
+</tr>
+<tr>
+<td><code>siem.py</code>, <code>follow.py</code></td>
+<td>Log export to a SIEM (<code>pandora-box-siem.service</code>); following a log file across its rotations, also used for the audit log of USBGuard</td>
+</tr>
+<tr>
+<td><code>airgap.py</code>, <code>remotes.py</code>, <code>keyid.py</code>, <code>keyfs.py</code></td>
+<td>Copy to a server (stations): workflow and <code>pandora-box-airgap</code> service, mirror over rsync or SFTP, signed identifier written on the keys, limits of the filesystems of the keys</td>
+</tr>
+<tr>
 <td><code>ui/</code></td>
 <td>Graphical kiosk interface (framebuffer, themes), curses (administrator) and console interfaces</td>
 </tr>
 <tr>
 <td><code>logs.py</code>, <code>lock.py</code></td>
 <td>JSON logs, single-instance lock</td>
+</tr>
+<tr>
+<td><code>text.py</code></td>
+<td>Untrusted strings (file names, device labels) made printable and escaped</td>
 </tr>
 </tbody>
 </table>
