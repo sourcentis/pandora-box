@@ -42,8 +42,13 @@ openssl x509 -in image/release/secure-boot.crt -noout -fingerprint -sha256
 openssl pkey -pubin -in image/release/update.pem -outform DER | sha256sum
 ```
 
-> [!IMPORTANT]
-> The release keys are not created yet: the fingerprints will be given here.
+| Key | SHA-256 fingerprint |
+|---|---|
+| Secure Boot key (`secure-boot.crt`, certificate) | `B0:A3:3D:3E:50:41:67:26:CB:BF:6B:D4:B7:97:7F:2A:0C:D0:C4:C4:F8:2B:C2:75:2A:A5:20:06:AB:84:2C:83` |
+| Update key (`update.pem`, public key in DER) | `06d2d2f5e183f7f9bd1ae118df37e8e789aca6153768718cf07d1d3e37c73fb8` |
+
+Created on 2026-11-03; the Secure Boot certificate is valid until
+2036-10-31 (the firmware of a kiosk does not check it).
 
 ### Creating the keys
 

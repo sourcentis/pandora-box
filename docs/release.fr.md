@@ -45,9 +45,13 @@ openssl x509 -in image/release/secure-boot.crt -noout -fingerprint -sha256
 openssl pkey -pubin -in image/release/update.pem -outform DER | sha256sum
 ```
 
-> [!IMPORTANT]
-> Les clés de publication ne sont pas encore créées : leurs empreintes
-> seront données ici.
+| Clé | Empreinte SHA-256 |
+|---|---|
+| Clé Secure Boot (`secure-boot.crt`, certificat) | `B0:A3:3D:3E:50:41:67:26:CB:BF:6B:D4:B7:97:7F:2A:0C:D0:C4:C4:F8:2B:C2:75:2A:A5:20:06:AB:84:2C:83` |
+| Clé de mise à jour (`update.pem`, clé publique en DER) | `06d2d2f5e183f7f9bd1ae118df37e8e789aca6153768718cf07d1d3e37c73fb8` |
+
+Créées le 2026-11-03 ; le certificat Secure Boot est valide jusqu'au
+2036-10-31 (le micrologiciel d'une borne ne le vérifie pas).
 
 ### Créer les clés { #creating-the-keys }
 

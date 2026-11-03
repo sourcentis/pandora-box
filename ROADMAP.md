@@ -204,7 +204,7 @@ See [docs/signatures.md](docs/signatures.md).
 - [x] Online updates through a dedicated channel
 - [x] Online updates from the sources themselves
 - [x] Time synchronization of online kiosks
-- [ ] Create the release keys and publish their fingerprints
+- [x] Create the release keys and publish their fingerprints
 - [ ] Define the publication schedule
 
 ### Testing in a virtual machine
