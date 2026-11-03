@@ -1460,9 +1460,10 @@ ne reçoivent plus de jeux de signatures.</p>
 Le conteneur utilise son propre démon PC/SC : arrêtez d'abord celui de
 l'ordinateur, s'il en fait tourner un (<code>sudo systemctl stop pcscd.socket
 pcscd</code>, puis <code>sudo systemctl start pcscd.socket</code> à la fin).</p>
-<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-it<span class="w"> </span>--device<span class="w"> </span>/dev/bus/usb<span class="w"> </span>-v<span class="w"> </span>/run/udev:/run/udev:ro<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-it<span class="w"> </span>--device-cgroup-rule<span class="o">=</span><span class="s1">'c 189:* rmw'</span><span class="w"> </span>-v<span class="w"> </span>/dev/bus/usb:/dev/bus/usb<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-v<span class="w"> </span>/run/udev:/run/udev:ro<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>-v<span class="w"> </span><span class="s2">"</span><span class="nv">$PWD</span><span class="s2">/image/release:/release"</span><span class="w"> </span>--tmpfs<span class="w"> </span>/keys:mode<span class="o">=</span><span class="m">0700</span><span class="w"> </span>pandora-box-builder<span class="w"> </span>bash
-pcscd
+pcscd<span class="w"> </span>--disable-polkit<span class="w">   </span><span class="c1"># pas de polkit dans le conteneur : il refuserait tout client</span>
 opensc-tool<span class="w"> </span>-l<span class="w">      </span><span class="c1"># liste le lecteur de la YubiKey : Yubico YubiKey ... CCID</span>
 <span class="nb">cd</span><span class="w"> </span>/keys
 openssl<span class="w"> </span>req<span class="w"> </span>-new<span class="w"> </span>-x509<span class="w"> </span>-newkey<span class="w"> </span>rsa:2048<span class="w"> </span>-nodes<span class="w"> </span>-days<span class="w"> </span><span class="m">3650</span><span class="w"> </span>-subj<span class="w"> </span><span class="s2">"/CN=PandoraBox release Secure Boot key/"</span><span class="w"> </span><span class="se">\</span>
@@ -1471,13 +1472,20 @@ openssl<span class="w"> </span>genpkey<span class="w"> </span>-algorithm<span cl
 openssl<span class="w"> </span>req<span class="w"> </span>-new<span class="w"> </span>-x509<span class="w"> </span>-key<span class="w"> </span>update.key<span class="w"> </span>-days<span class="w"> </span><span class="m">3650</span><span class="w"> </span>-subj<span class="w"> </span><span class="s2">"/CN=PandoraBox release update key/"</span><span class="w"> </span>-out<span class="w"> </span>update.crt
 openssl<span class="w"> </span>pkey<span class="w"> </span>-in<span class="w"> </span>update.key<span class="w"> </span>-pubout<span class="w"> </span>-out<span class="w"> </span>update.pem
 </code></pre></div>
+<p>Le conteneur voit les périphériques USB branchés après son démarrage
+(<code>/dev/bus/usb</code> de l'ordinateur, tous les périphériques USB autorisés) : les
+YubiKeys peuvent être échangées sans en sortir, ce qui effacerait les clés
+privées. Son démon PC/SC ne voit pas une YubiKey branchée après son
+démarrage : relancez-le après chaque échange. <code>-r Yubico</code> choisit la YubiKey
+quand l'ordinateur a un autre lecteur de cartes à puce.</p>
 <p>Puis pour chaque YubiKey (<code>-k</code> demande sa clé de gestion ; changez d'abord
 le PIN, le PUK et la clé de gestion par défaut d'une YubiKey neuve) :</p>
-<div class="highlight"><pre><span></span><code>yubico-piv-tool<span class="w"> </span>-k<span class="w"> </span>-a<span class="w"> </span>import-key<span class="w"> </span>-s<span class="w"> </span>9c<span class="w"> </span>-i<span class="w"> </span>secure-boot.key<span class="w"> </span>--pin-policy<span class="o">=</span>once<span class="w"> </span>--touch-policy<span class="o">=</span>never
-yubico-piv-tool<span class="w"> </span>-k<span class="w"> </span>-a<span class="w"> </span>import-certificate<span class="w"> </span>-s<span class="w"> </span>9c<span class="w"> </span>-i<span class="w"> </span>secure-boot.crt
-yubico-piv-tool<span class="w"> </span>-k<span class="w"> </span>-a<span class="w"> </span>import-key<span class="w"> </span>-s<span class="w"> </span><span class="m">82</span><span class="w"> </span>-i<span class="w"> </span>update.key<span class="w"> </span>--pin-policy<span class="o">=</span>once<span class="w"> </span>--touch-policy<span class="o">=</span>never
-yubico-piv-tool<span class="w"> </span>-k<span class="w"> </span>-a<span class="w"> </span>import-certificate<span class="w"> </span>-s<span class="w"> </span><span class="m">82</span><span class="w"> </span>-i<span class="w"> </span>update.crt
-pkcs11-tool<span class="w"> </span>--module<span class="w"> </span>/usr/lib/x86_64-linux-gnu/libykcs11.so<span class="w"> </span>--login<span class="w"> </span>--list-objects
+<div class="highlight"><pre><span></span><code>pkill pcscd; pcscd --disable-polkit; sleep 2; opensc-tool -l   # une fois branchée
+yubico-piv-tool -r Yubico -k -a import-key -s 9c -i secure-boot.key --pin-policy=once --touch-policy=never
+yubico-piv-tool -r Yubico -k -a import-certificate -s 9c -i secure-boot.crt
+yubico-piv-tool -r Yubico -k -a import-key -s 82 -i update.key --pin-policy=once --touch-policy=never
+yubico-piv-tool -r Yubico -k -a import-certificate -s 82 -i update.crt
+pkcs11-tool --module /usr/lib/x86_64-linux-gnu/libykcs11.so --login --list-objects
 </code></pre></div>
 <p><code>ykcs11</code> ne montre que la clé d'un emplacement qui contient un certificat. La
 politique de PIN <code>once</code> permet à une construction de signer toutes les
