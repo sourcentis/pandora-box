@@ -25,14 +25,24 @@ listés.
 | `warning` | Des fichiers suspects ou pas entièrement analysés sont conservés (`scan.suspicious` ou `scan.on_error` réglé sur `warn`) |
 | `cleaned` | Les fichiers supprimés |
 | `not_cleaned` | Les fichiers qui n'ont pas pu être supprimés, ou la clé a été retirée avant le nettoyage |
-| `not_verified` | Des fichiers n'ont pas pu être analysés (`scan.on_error = "block"`), ou la clé a été retirée ou énumérée à nouveau pendant son analyse : la clé ne doit pas être utilisée |
+| `not_verified` | Des fichiers n'ont pas pu être analysés (`scan.on_error = "block"`) : la clé ne doit pas être utilisée |
+| `key_changed` | La clé a été retirée ou énumérée à nouveau pendant son analyse (comportement suspect) : non vérifiée, la clé ne doit pas être utilisée |
 | `error` | La clé n'a pas pu être montée ou lue |
+| `refused` | Un périphérique USB refusé par USBGuard qui n'est pas une clé USB (clavier, souris, adaptateur réseau...), avec le nom et les identifiants qu'il donne |
+| `refused_composite` | Une clé USB refusée par USBGuard parce qu'elle est aussi un autre périphérique (un clavier) : elle ne doit pas être utilisée, et est remise au service informatique |
 | `service` | Clé de maintenance, de mise à jour des signatures ou de l'image : les messages de la borne |
 
 Un résultat (analyse, clé de maintenance ou de mise à jour) reste à l'écran
 jusqu'au retrait de la clé, puis encore `display.return_seconds` (5 secondes
 par défaut) avant l'écran d'attente. Insérer une autre clé affiche aussitôt
 son analyse.
+
+Un périphérique refusé est expliqué dès qu'USBGuard le bloque (la borne suit
+son journal d'audit, voir [Périphériques USB refusés](logs.md#refused-usb-devices)),
+jusqu'à son retrait. Seuls les périphériques branchés pendant que la borne
+fonctionne sont affichés : ceux présents au démarrage et les périphériques
+internes (`hardwired`) sont seulement consignés. Quand une clé est insérée,
+son écran reste : le refus est seulement consigné.
 
 ## Comment l'interface est dessinée { #how-it-is-drawn }
 

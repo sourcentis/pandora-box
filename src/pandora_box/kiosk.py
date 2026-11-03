@@ -30,7 +30,7 @@ from pandora_box.engines.registry import NoEngineError, engine_specs, load_engin
 from pandora_box.hashing import hash_fd
 from pandora_box.imageupdate import UPDATE_FOLDER as IMAGE_FOLDER
 from pandora_box.logs import get_logger, log_event
-from pandora_box.monitor import Action, DeviceSource
+from pandora_box.monitor import Action, DeviceEvent, DeviceSource
 from pandora_box.policy import device_verdict
 from pandora_box.quarantine import Quarantine
 from pandora_box.remotes import Entry
@@ -62,7 +62,7 @@ from pandora_box.sigsets import (
     verify_installed,
 )
 from pandora_box.statemachine import State, StateMachine
-from pandora_box.text import escape, human_size
+from pandora_box.text import escape, human_size, printable
 from pandora_box.ui import Display
 from pandora_box.ui.base import Screen
 from pandora_box.workers import EngineInfo, WorkerPool, auto_workers
@@ -288,6 +288,9 @@ class Kiosk:
         # of its last check (None: not on USB, not checked)
         self.usb_identity: UsbIdentity | None = None
         self._key_checked = 0.0
+        # The devices refused by USBGuard shown on the screen, by sysfs path,
+        # until they are removed
+        self.refused: set[str] = set()
         self.machine = StateMachine(
             {
                 State.START: self.on_start,
@@ -390,6 +393,14 @@ class Kiosk:
                 return self._restart_after_update()
             self._load_new_set()
             return State.WAIT
+        if event.action is Action.REFUSED:
+            return self._show_refused(event)
+        if event.action is Action.REFUSED_REMOVED:
+            self.refused.discard(event.device.node)
+            if not self.refused and self.device is None:
+                self.display.show_device(None)
+                self._show_waiting()
+            return State.WAIT
         if event.action is Action.REMOVE:
             log_event(logger, "device_removed", node=event.device.node)
             self.device = None
@@ -415,6 +426,20 @@ class Kiosk:
         self.display.show(Screen.SCANNING)
         self.display.message("Device inserted")
         return State.INSERTED
+
+    def _show_refused(self, event: DeviceEvent) -> State:
+        """Explain a device refused by USBGuard (logged by pandora_box.usbguard)."""
+        d = event.device
+        name = " ".join(p for p in (printable(d.model), d.vendor) if p)
+        kind = "USB key that is also another device" if event.composite else "USB device"
+        self.display.message(f"{kind} refused: {name or 'unknown'}")
+        if self.device is not None:
+            # The screen of the key stays until it is removed
+            return State.WAIT
+        self.refused.add(d.node)
+        self.display.show_device(d)
+        self.display.show(Screen.REFUSED_COMPOSITE if event.composite else Screen.REFUSED)
+        return State.WAIT
 
     def on_inserted(self) -> State:
         if self.device is None:
@@ -820,7 +845,7 @@ class Kiosk:
         if self.summary.behaviors:
             # Whatever scan.on_error: neither cleaned nor copied to a server
             self._release()
-            self.display.show(Screen.NOT_VERIFIED, self.summary.unscanned)
+            self.display.show(Screen.KEY_CHANGED)
             self.display.message(
                 "SUSPICIOUS DEVICE, NOT VERIFIED: do not use it. Remove the device."
             )

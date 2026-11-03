@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import time
 from collections.abc import Iterator
 from pathlib import Path
@@ -8,13 +9,16 @@ from pathlib import Path
 import pytest
 
 from pandora_box import usbguard
+from pandora_box.device import UsbDevice
 from pandora_box.logs import redact_key_fields, setup_logging
+from pandora_box.monitor import Action, DeviceEvent
 from pandora_box.usbguard import (
     AuditWatcher,
     interface_kind,
     parse_audit_line,
     parse_rule,
     refused_device,
+    refused_removal,
 )
 
 # Lines as USBGuard writes them (FileAuditBackend): keys in alphabetical order
@@ -218,3 +222,49 @@ def test_station_redacts_the_device(kiosk_log: Path, tmp_path: Path) -> None:
 def test_available(tmp_path: Path) -> None:
     assert AuditWatcher.available(tmp_path / "audit.log")
     assert not AuditWatcher.available(tmp_path / "missing" / "audit.log")
+
+
+def _now_line(line: str, moment: float) -> str:
+    return re.sub(r"^\[[\d.]+\]", f"[{moment:.3f}]", line)
+
+
+REMOVE = (
+    "[1730638400.000] (A) uid=0 pid=708 "
+    f"device.rule='{KEYBOARD_RULE}' device.system_name='/devices/pci0000:00/usb1/1-2' "
+    "result='SUCCESS' type='Device.Remove' "
+)
+
+
+def test_refused_removal() -> None:
+    assert refused_removal(REMOVE) == (1730638400.0, "/devices/pci0000:00/usb1/1-2")
+    # An allowed device removed: nothing to explain
+    allowed = REMOVE.replace("device.rule='block", "device.rule='allow")
+    assert refused_removal(allowed) is None
+    assert refused_removal(KEYBOARD) is None
+
+
+def test_watcher_notifies_the_kiosk(tmp_path: Path, kiosk_log: Path) -> None:
+    events: list[DeviceEvent] = []
+    watcher = AuditWatcher(tmp_path / "a.log", tmp_path / "s.json", notify=events.append)
+    now = watcher.since + 1
+    # Refused before the kiosk started (at boot): only logged
+    watcher.handle(KEYBOARD)
+    watcher.handle(REMOVE)
+    assert events == []
+    # Refused once started: shown, then its removal
+    watcher.handle(_now_line(KEYBOARD, now))
+    composite = KEYBOARD.replace("{ 03:01:01 03:00:00 }", "{ 08:06:50 03:01:01 }")
+    watcher.handle(_now_line(composite, now))
+    watcher.handle(_now_line(REMOVE, now))
+    # An internal device: only logged
+    watcher.handle(_now_line(KEYBOARD.replace('"hotplug"', '"hardwired"'), now))
+    assert [(e.action, e.composite) for e in events] == [
+        (Action.REFUSED, False),
+        (Action.REFUSED, True),
+        (Action.REFUSED_REMOVED, False),
+    ]
+    assert events[0].device == UsbDevice(
+        "/devices/pci0000:00/usb1/1-2", model="USB Keyboard", serial="", vendor="046d:c31c"
+    )
+    assert events[2].device.node == "/devices/pci0000:00/usb1/1-2"
+    assert len(_entries(kiosk_log)) == 4

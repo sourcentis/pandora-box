@@ -122,6 +122,14 @@ def sample_states(language: str = "en") -> dict[str, ViewState]:
         "cleaned": ViewState(Screen.CLEANED, files=threats),
         "not_cleaned": ViewState(Screen.NOT_CLEANED, files=threats[:1]),
         "not_verified": ViewState(Screen.NOT_VERIFIED, files=unscanned),
+        "key_changed": ViewState(Screen.KEY_CHANGED),
+        "refused": ViewState(
+            Screen.REFUSED, device=UsbDevice("", model="USB Keyboard", vendor="046d:c31c")
+        ),
+        "refused_composite": ViewState(
+            Screen.REFUSED_COMPOSITE,
+            device=UsbDevice("", model="USB Flash Disk", vendor="1234:5678"),
+        ),
         "error": ViewState(Screen.ERROR, messages=("Cannot mount device: filesystem not allowed",)),
         "service": ViewState(
             Screen.SERVICE,

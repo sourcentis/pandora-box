@@ -499,8 +499,11 @@ def check_usb_policy(vm: Machine) -> None:
         found = {name: flag for name, flag in usb_devices(vm).items() if product in name}
         check(set(found.values()) == {"0"}, f"{driver} was authorized: {found}")
         name = next(iter(found))
-        print(f"{driver} ({name}): blocked")
+        # Explained on the screen until it is removed
+        wait_screen(vm, "USB device refused")
+        print(f"{driver} ({name}): blocked, refused screen")
         vm.remove_usb_device(driver)
+        wait_screen(vm, "Please insert a USB key")
 
     inputs = vm.shell.run("grep -i 'qemu.*keyboard' /proc/bus/input/devices || true").strip()
     check(not inputs, f"input device created for the keyboard: {inputs}")
@@ -1423,6 +1426,9 @@ def check_key_removed_during_scan(vm: Machine, workdir: Path) -> None:
         f"device verdict: {verdict}",
     )
     check(verdict["files"] < 4000, f"the scan was over before the key was removed: {verdict}")
+    # Shown a few seconds only once the key is removed: read from the log
+    while log.wait("display_screen")["screen"] != "key_changed":
+        pass
     report = last_report(vm)
     check(report["verdict"]["suspicious_behaviors"] == ["removed"], f"report: {report['verdict']}")
     log.wait("device_removed")

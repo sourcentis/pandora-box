@@ -24,13 +24,23 @@ cleaning, once the files to remove are listed.
 | `warning` | Suspicious or not fully scanned files are kept (`scan.suspicious` or `scan.on_error` set to `warn`) |
 | `cleaned` | The removed files |
 | `not_cleaned` | The files that could not be removed, or the key was removed before the cleaning |
-| `not_verified` | Files that could not be scanned (`scan.on_error = "block"`), or a key removed or enumerated again during its scan: the key must not be used |
+| `not_verified` | Files that could not be scanned (`scan.on_error = "block"`): the key must not be used |
+| `key_changed` | The key was removed or enumerated again during its scan (a suspicious behavior): not verified, the key must not be used |
 | `error` | The key could not be mounted or read |
+| `refused` | A USB device refused by USBGuard that is not a USB key (keyboard, mouse, network adapter...), with the name and identifiers it gives |
+| `refused_composite` | A USB key refused by USBGuard because it is also another device (a keyboard): it must not be used, and is handed to the IT department |
 | `service` | Maintenance, signature or image update device: the messages of the kiosk |
 
 A result (scan, maintenance or update device) stays on the screen until the
 key is removed, then `display.return_seconds` more (5 seconds by default)
 before the waiting screen. Inserting another key shows its scan at once.
+
+A refused device is explained as soon as USBGuard blocks it (the kiosk
+follows its audit log, see [Refused USB devices](logs.md#refused-usb-devices)),
+until it is removed. Only the devices inserted while the kiosk runs are
+shown: those present at boot and the internal ones (`hardwired`) are only
+logged. While a key is inserted, its screen stays: the refusal is only
+logged.
 
 ## How it is drawn
 

@@ -140,12 +140,14 @@ def main(argv: list[str] | None = None) -> int:
         lock.release()
         return 1
     notify_ready()
-    # The USB devices refused by USBGuard, logged with the other events
-    audit = AuditWatcher() if AuditWatcher.available() else None
+    source = UdevSource()
+    # The USB devices refused by USBGuard, logged with the other events and
+    # explained on the screen
+    audit = AuditWatcher(notify=source.post) if AuditWatcher.available() else None
     if audit is not None:
         audit.start()
     try:
-        Kiosk(config, display, UdevSource(), pool, signatures_error=signatures_error).run()
+        Kiosk(config, display, source, pool, signatures_error=signatures_error).run()
     except KeyboardInterrupt:
         pass
     finally:

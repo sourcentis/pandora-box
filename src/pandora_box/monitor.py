@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import queue
 import time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
@@ -20,12 +21,18 @@ class Action(StrEnum):
     REMOVE = "remove"
     # No device event for a while: the kiosk may do its background work
     IDLE = "idle"
+    # A USB device refused by USBGuard was inserted, then removed
+    # (pandora_box.usbguard): device describes it, not a filesystem
+    REFUSED = "refused"
+    REFUSED_REMOVED = "refused_removed"
 
 
 # Device of the IDLE events
 NO_DEVICE = UsbDevice(node="")
 # Seconds without device event before an IDLE event
 IDLE_INTERVAL = 5.0
+# Longest wait for a udev event before the events posted by other threads
+POLL_INTERVAL = 0.5
 # Longest wait for udev to identify every partition of an inserted key
 SETTLE_TIMEOUT = 10.0
 
@@ -50,6 +57,9 @@ KeyDescriber = Callable[[str, str, Mapping[str, Any]], UsbDevice]
 class DeviceEvent:
     action: Action
     device: UsbDevice
+    # REFUSED: a storage device with another function (a key that is also a
+    # keyboard)
+    composite: bool = False
 
 
 class DeviceSource(Protocol):
@@ -152,7 +162,11 @@ class UsbFilesystemFilter:
 
 
 class UdevSource:
-    """Listen to udev block events for filesystems on USB devices."""
+    """Listen to udev block events for filesystems on USB devices.
+
+    Other threads post their events (the devices refused by USBGuard) with
+    post: they are returned in order with the udev ones.
+    """
 
     def __init__(self) -> None:
         import pyudev
@@ -161,12 +175,24 @@ class UdevSource:
         self._monitor = pyudev.Monitor.from_netlink(self._context)
         self._monitor.filter_by("block")
         self._filter = UsbFilesystemFilter(self._describe)
+        self._posted: queue.SimpleQueue[DeviceEvent] = queue.SimpleQueue()
+
+    def post(self, event: DeviceEvent) -> None:
+        """Called from any thread."""
+        self._posted.put(event)
 
     def wait_event(self) -> DeviceEvent | None:
+        idle_at = time.monotonic() + IDLE_INTERVAL
         while True:
-            dev = self._monitor.poll(timeout=IDLE_INTERVAL)
+            try:
+                return self._posted.get_nowait()
+            except queue.Empty:
+                pass
+            dev = self._monitor.poll(timeout=POLL_INTERVAL)
             if dev is None:
-                return DeviceEvent(Action.IDLE, NO_DEVICE)
+                if time.monotonic() >= idle_at:
+                    return DeviceEvent(Action.IDLE, NO_DEVICE)
+                continue
             disk = dev.find_parent("block", "disk") if dev.device_type == "partition" else None
             event = self._filter.event(
                 dev.action, dev.device_node, dev, None if disk is None else disk.device_node

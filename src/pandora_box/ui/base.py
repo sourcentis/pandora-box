@@ -41,7 +41,13 @@ class Screen(StrEnum):
     CLEANED = "cleaned"
     NOT_CLEANED = "not_cleaned"
     NOT_VERIFIED = "not_verified"
+    # The key was removed or enumerated again during its scan: not verified
+    KEY_CHANGED = "key_changed"
     ERROR = "error"
+    # A device refused by USBGuard: not a USB key, or a key that is also
+    # another device (a keyboard)
+    REFUSED = "refused"
+    REFUSED_COMPOSITE = "refused_composite"
     # Maintenance, signature or image update device
     SERVICE = "service"
     # airgap: the clean files of the key are copied to a server
@@ -58,7 +64,10 @@ RESULT_SCREENS = frozenset(
         Screen.CLEANED,
         Screen.NOT_CLEANED,
         Screen.NOT_VERIFIED,
+        Screen.KEY_CHANGED,
         Screen.ERROR,
+        Screen.REFUSED,
+        Screen.REFUSED_COMPOSITE,
         Screen.SERVICE,
         Screen.TRANSFERRED,
         Screen.TRANSFER_FAILED,

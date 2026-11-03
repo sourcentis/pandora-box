@@ -1,7 +1,19 @@
 from __future__ import annotations
 
+import threading
+import time
+
+import pytest
+
 from pandora_box.device import UsbDevice
-from pandora_box.monitor import Action, UsbFilesystemFilter, describe_key
+from pandora_box.monitor import (
+    IDLE_INTERVAL,
+    Action,
+    DeviceEvent,
+    UdevSource,
+    UsbFilesystemFilter,
+    describe_key,
+)
 
 USB_VFAT = {"ID_FS_USAGE": "filesystem", "ID_BUS": "usb", "ID_FS_TYPE": "vfat"}
 
@@ -128,3 +140,21 @@ def test_describe_key_with_several_partitions() -> None:
         ],
     )
     assert key.multiple and [v.name for v in key.volumes] == ["sdb1"]
+
+
+def test_udev_source_returns_posted_events() -> None:
+    # A device refused by USBGuard, posted by the thread of the audit log
+    # while the kiosk waits: returned without waiting for an IDLE event
+    try:
+        source = UdevSource()
+    except Exception as ex:  # no netlink socket in this sandbox
+        pytest.skip(f"no udev: {ex}")
+    event = DeviceEvent(Action.REFUSED, UsbDevice("/devices/usb1/1-2"), composite=True)
+    timer = threading.Timer(0.2, source.post, (event,))
+    timer.start()
+    started = time.monotonic()
+    try:
+        assert source.wait_event() == event
+    finally:
+        timer.cancel()
+    assert time.monotonic() - started < IDLE_INTERVAL

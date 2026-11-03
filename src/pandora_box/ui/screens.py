@@ -318,6 +318,26 @@ class Renderer:
         y = self._result(canvas, body, "error", "threat", "not_verified", "not_verified_help")
         self._file_list(canvas, state.files, (body[0], y, body[2], body[3]))
 
+    def _key_changed(self, canvas: _Canvas, state: ViewState, body: Box) -> None:
+        self._result(canvas, body, "threat", "threat", "key_changed", "key_changed_help")
+
+    def _refused(self, canvas: _Canvas, state: ViewState, body: Box) -> None:
+        y = self._result(canvas, body, "error", "threat", "refused", "refused_help")
+        self._refused_device(canvas, state, (body[0], y, body[2], body[3]))
+
+    def _refused_composite(self, canvas: _Canvas, state: ViewState, body: Box) -> None:
+        y = self._result(canvas, body, "threat", "threat", "refused", "refused_composite_help")
+        self._refused_device(canvas, state, (body[0], y, body[2], body[3]))
+
+    def _refused_device(self, canvas: _Canvas, state: ViewState, box: Box) -> None:
+        """The name the device gives and its identifiers, as USBGuard saw them."""
+        line = self._device_line(state)
+        if not line:
+            return
+        font = self.font(18)
+        canvas.text((box[0], box[1]), canvas.fit(line, font, box[2] - box[0]), font,
+                    self.color("muted"))  # fmt: skip
+
     def _error(self, canvas: _Canvas, state: ViewState, body: Box) -> None:
         y = self._result(canvas, body, "error", "threat", "error", "error_help")
         self._messages(canvas, state.messages[-3:], (body[0], y, body[2], body[3]))

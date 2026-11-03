@@ -238,7 +238,7 @@ The kiosk draws a graphical interface on its touch screen: waiting for a key, sc
 - [x] Internationalization: French and English
 - [x] German and Dutch texts built in
 - [x] Accessibility: contrast and font size
-- [ ] Refused device screen: a device blocked by USBGuard is explained to the user
+- [x] Refused device screen: a device blocked by USBGuard is explained to the user
 - [ ] Result screen states that the content of the key was checked, not its hardware
 - [ ] ~~Protected administrator mode~~ *(not retained)*
 

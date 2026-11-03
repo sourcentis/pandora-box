@@ -117,6 +117,9 @@ started; the position of the last line read is saved
 reports no device twice. On a [station](airgap.md#a-stolen-kiosk),
 `model`, `serial` and `rule` are left out.
 
+The device is also explained on the screen of the kiosk
+([`refused` and `refused_composite` screens](interface.md#screens)).
+
 A device the operator meant to use (a mouse) appears here too; a key
 refused as a whole (`composite`), or a keyboard or a network adapter on a
 kiosk that has none, deserves a look.

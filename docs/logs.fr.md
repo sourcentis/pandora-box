@@ -123,6 +123,9 @@ la borne ne signale aucun périphérique deux fois. Sur une
 [borne de transfert](airgap.md#a-stolen-kiosk), `model`, `serial` et `rule`
 sont omis.
 
+Le périphérique est aussi expliqué sur l'écran de la borne
+([écrans `refused` et `refused_composite`](interface.md#screens)).
+
 Un périphérique que l'opérateur voulait utiliser (une souris) apparaît
 aussi ; une clé refusée en entier (`composite`), ou un clavier ou un
 adaptateur réseau sur une borne qui n'en a pas, mérite un examen.

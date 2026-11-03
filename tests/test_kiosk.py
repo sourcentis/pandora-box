@@ -557,7 +557,7 @@ def test_key_changed_during_the_scan(
     assert display.confirmations == 0
     assert "device_cleaned" not in events
     assert not (config.quarantine.folder).exists()
-    assert display.screens[-1][0] is Screen.NOT_VERIFIED
+    assert display.screens[-1][0] is Screen.KEY_CHANGED
     assert f"SUSPICIOUS: {BEHAVIOR_REASONS[behavior]}" in display.messages
     assert "SUSPICIOUS DEVICE, NOT VERIFIED: do not use it. Remove the device." in display.messages
 
@@ -571,7 +571,7 @@ def test_key_changed_before_its_partition(
     report = json.loads(next(config.report.folder.glob("*.json")).read_text())
     assert report["verdict"]["device"] == "not_verified"
     assert report["verdict"]["statistics"]["files"] == 0
-    assert display.screens[-1][0] is Screen.NOT_VERIFIED
+    assert display.screens[-1][0] is Screen.KEY_CHANGED
 
 
 def test_key_not_on_usb_is_not_checked(
@@ -583,3 +583,42 @@ def test_key_not_on_usb_is_not_checked(
     ).run()
     report = json.loads(next(config.report.folder.glob("*.json")).read_text())
     assert report["verdict"]["suspicious_behaviors"] == []
+
+
+KEYBOARD = UsbDevice("/devices/pci0000:00/usb1/1-2", model="USB Keyboard", vendor="046d:c31c")
+
+
+def test_refused_device_is_explained(
+    config: Config, display: RecordingDisplay, tmp_path: Path, pool: WorkerPool
+) -> None:
+    events = [
+        DeviceEvent(Action.REFUSED, KEYBOARD),
+        DeviceEvent(Action.REFUSED_REMOVED, UsbDevice(KEYBOARD.node)),
+        DeviceEvent(Action.REFUSED, KEYBOARD, composite=True),
+    ]
+    make_kiosk(config, display, DirectoryMounter(tmp_path), events, pool).run()
+    assert [screen for screen, _ in display.screens] == [
+        Screen.READY,
+        Screen.REFUSED,
+        Screen.READY,
+        Screen.REFUSED_COMPOSITE,
+    ]
+    assert "USB device refused: USB Keyboard 046d:c31c" in display.messages
+    assert "USB key that is also another device refused: USB Keyboard 046d:c31c" in display.messages
+    assert display.devices[0] == KEYBOARD
+
+
+def test_refused_device_with_a_key(
+    config: Config, display: RecordingDisplay, tmp_path: Path, pool: WorkerPool
+) -> None:
+    # A key is inserted: its screen stays, the refusal is only a message
+    (tmp_path / "media").mkdir()
+    (tmp_path / "media" / "file.txt").write_text("hello")
+    events = [
+        DeviceEvent(Action.ADD, DEVICE),
+        DeviceEvent(Action.REFUSED, KEYBOARD),
+        DeviceEvent(Action.REFUSED_REMOVED, UsbDevice(KEYBOARD.node)),
+    ]
+    make_kiosk(config, display, DirectoryMounter(tmp_path / "media"), events, pool).run()
+    assert display.screens[-1] == (Screen.CLEAN, [])
+    assert "USB device refused: USB Keyboard 046d:c31c" in display.messages

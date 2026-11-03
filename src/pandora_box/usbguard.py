@@ -27,12 +27,16 @@ import logging
 import os
 import re
 import threading
+import time
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from pandora_box.device import UsbDevice
 from pandora_box.follow import LogFollower, load_position, save_position
 from pandora_box.logs import get_logger, log_event
+from pandora_box.monitor import Action, DeviceEvent
 
 logger = get_logger("usbguard")
 
@@ -238,12 +242,58 @@ def refused_device(line: str) -> dict[str, Any] | None:
     return event
 
 
-class AuditWatcher:
-    """Follow the audit log of USBGuard in a thread and log the refused devices."""
+def refused_removal(line: str) -> tuple[float | None, str] | None:
+    """The time and the sysfs path of a refused device removed, or None."""
+    moment, fields = parse_audit_line(line)
+    if fields.get("type") != "Device.Remove" or fields.get("result") != "SUCCESS":
+        return None
+    # The rule of the device holds its target when it was removed
+    if parse_rule(fields.get("device.rule", "")).get("target") not in REFUSED:
+        return None
+    return moment, fields.get("device.system_name", "")
 
-    def __init__(self, audit_log: Path = AUDIT_LOG, state: Path = STATE_PATH) -> None:
+
+# Called from the thread of the watcher with the events for the kiosk
+Notify = Callable[[DeviceEvent], None]
+
+
+def refused_event(event: dict[str, Any]) -> DeviceEvent:
+    """The REFUSED event of the kiosk for a usb_device_blocked event."""
+    device = UsbDevice(
+        node=event["system_name"],
+        model=event["model"],
+        serial=event["serial"],
+        # The vendor and product identifiers: USBGuard gives no vendor name
+        vendor=event["usb_id"],
+    )
+    return DeviceEvent(Action.REFUSED, device, composite=event["composite"])
+
+
+def _moment(value: object) -> float | None:
+    if not isinstance(value, str):
+        return None
+    return datetime.fromisoformat(value).timestamp()
+
+
+class AuditWatcher:
+    """Follow the audit log of USBGuard in a thread and log the refused devices.
+
+    notify: told of the devices refused once the watcher started, and of
+    their removal, to explain them on the screen. The devices refused before
+    (at boot, before a restart of the kiosk) and the internal ones
+    (hardwired) are only logged.
+    """
+
+    def __init__(
+        self,
+        audit_log: Path = AUDIT_LOG,
+        state: Path = STATE_PATH,
+        notify: Notify | None = None,
+    ) -> None:
         self.audit_log = audit_log
         self.state = state
+        self.notify = notify
+        self.since = time.time()
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
         self._save_failed = False
@@ -289,11 +339,24 @@ class AuditWatcher:
     def handle(self, line: str) -> None:
         try:
             event = refused_device(line)
+            removal = None if event is not None else refused_removal(line)
         except (ValueError, OverflowError) as ex:
             log_event(logger, "usbguard_audit_unreadable", logging.WARNING, error=str(ex))
             return
         if event is not None:
             log_event(logger, "usb_device_blocked", logging.WARNING, **event)
+            moment = _moment(event.get("blocked_at"))
+            if (
+                self.notify is not None
+                and moment is not None
+                and moment >= self.since
+                and event["connect_type"] != "hardwired"
+            ):
+                self.notify(refused_event(event))
+        elif removal is not None and self.notify is not None:
+            moment, system_name = removal
+            if moment is not None and moment >= self.since:
+                self.notify(DeviceEvent(Action.REFUSED_REMOVED, UsbDevice(node=system_name)))
 
     def _save(self, follower: LogFollower) -> None:
         position = follower.position()
