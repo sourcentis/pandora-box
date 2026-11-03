@@ -133,7 +133,8 @@ _pcsc_start() {
         ln -sf "$host" /run/pcscd/pcscd.comm
         return 0
     fi
-    pcscd
+    # No polkit in the container: pcscd would refuse every client
+    pcscd --disable-polkit
     # The daemon finds the readers after it starts
     for _ in 1 2 3 4 5 6 7 8 9 10; do
         if readers=$(_pcsc_readers /run/pcscd/pcscd.comm) && _pcsc_has_token "$readers"; then

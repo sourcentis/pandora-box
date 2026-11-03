@@ -63,9 +63,10 @@ l'ordinateur, s'il en fait tourner un (`sudo systemctl stop pcscd.socket
 pcscd`, puis `sudo systemctl start pcscd.socket` à la fin).
 
 ```sh
-docker run --rm -it --device /dev/bus/usb -v /run/udev:/run/udev:ro \
+docker run --rm -it --device-cgroup-rule='c 189:* rmw' -v /dev/bus/usb:/dev/bus/usb \
+    -v /run/udev:/run/udev:ro \
     -v "$PWD/image/release:/release" --tmpfs /keys:mode=0700 pandora-box-builder bash
-pcscd
+pcscd --disable-polkit   # pas de polkit dans le conteneur : il refuserait tout client
 opensc-tool -l      # liste le lecteur de la YubiKey : Yubico YubiKey ... CCID
 cd /keys
 openssl req -new -x509 -newkey rsa:2048 -nodes -days 3650 -subj "/CN=PandoraBox release Secure Boot key/" \
@@ -75,14 +76,22 @@ openssl req -new -x509 -key update.key -days 3650 -subj "/CN=PandoraBox release 
 openssl pkey -in update.key -pubout -out update.pem
 ```
 
+Le conteneur voit les périphériques USB branchés après son démarrage
+(`/dev/bus/usb` de l'ordinateur, tous les périphériques USB autorisés) : les
+YubiKeys peuvent être échangées sans en sortir, ce qui effacerait les clés
+privées. Son démon PC/SC ne voit pas une YubiKey branchée après son
+démarrage : relancez-le après chaque échange. `-r Yubico` choisit la YubiKey
+quand l'ordinateur a un autre lecteur de cartes à puce.
+
 Puis pour chaque YubiKey (`-k` demande sa clé de gestion ; changez d'abord
 le PIN, le PUK et la clé de gestion par défaut d'une YubiKey neuve) :
 
-```sh
-yubico-piv-tool -k -a import-key -s 9c -i secure-boot.key --pin-policy=once --touch-policy=never
-yubico-piv-tool -k -a import-certificate -s 9c -i secure-boot.crt
-yubico-piv-tool -k -a import-key -s 82 -i update.key --pin-policy=once --touch-policy=never
-yubico-piv-tool -k -a import-certificate -s 82 -i update.crt
+```shcccccdh
+pkill pcscd; pcscd --disable-polkit; sleep 2; opensc-tool -l   # une fois branchée
+yubico-piv-tool -r Yubico -k -a import-key -s 9c -i secure-boot.key --pin-policy=once --touch-policy=never
+yubico-piv-tool -r Yubico -k -a import-certificate -s 9c -i secure-boot.crt
+yubico-piv-tool -r Yubico -k -a import-key -s 82 -i update.key --pin-policy=once --touch-policy=never
+yubico-piv-tool -r Yubico -k -a import-certificate -s 82 -i update.crt
 pkcs11-tool --module /usr/lib/x86_64-linux-gnu/libykcs11.so --login --list-objects
 ```
 

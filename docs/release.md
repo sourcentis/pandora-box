@@ -58,9 +58,10 @@ its own PC/SC daemon: stop the one of the computer first, if it runs one
 afterwards).
 
 ```sh
-docker run --rm -it --device /dev/bus/usb -v /run/udev:/run/udev:ro \
+docker run --rm -it --device-cgroup-rule='c 189:* rmw' -v /dev/bus/usb:/dev/bus/usb \
+    -v /run/udev:/run/udev:ro \
     -v "$PWD/image/release:/release" --tmpfs /keys:mode=0700 pandora-box-builder bash
-pcscd
+pcscd --disable-polkit   # no polkit in the container: it would refuse every client
 opensc-tool -l      # lists the reader of the YubiKey: Yubico YubiKey ... CCID
 cd /keys
 openssl req -new -x509 -newkey rsa:2048 -nodes -days 3650 -subj "/CN=PandoraBox release Secure Boot key/" \
@@ -70,14 +71,22 @@ openssl req -new -x509 -key update.key -days 3650 -subj "/CN=PandoraBox release 
 openssl pkey -in update.key -pubout -out update.pem
 ```
 
+The container sees the USB devices plugged in after it started (`/dev/bus/usb`
+of the computer, every USB device allowed): the YubiKeys can be swapped
+without leaving it, which would erase the private keys. Its PC/SC daemon does
+not see a YubiKey plugged in after it started: restart it after each swap.
+`-r Yubico` chooses the YubiKey when the computer has another smart card
+reader.
+
 Then for each YubiKey (`-k` asks for its management key; change the default
 PIN, PUK and management key of a new YubiKey first):
 
 ```sh
-yubico-piv-tool -k -a import-key -s 9c -i secure-boot.key --pin-policy=once --touch-policy=never
-yubico-piv-tool -k -a import-certificate -s 9c -i secure-boot.crt
-yubico-piv-tool -k -a import-key -s 82 -i update.key --pin-policy=once --touch-policy=never
-yubico-piv-tool -k -a import-certificate -s 82 -i update.crt
+pkill pcscd; pcscd --disable-polkit; sleep 2; opensc-tool -l   # after plugging it in
+yubico-piv-tool -r Yubico -k -a import-key -s 9c -i secure-boot.key --pin-policy=once --touch-policy=never
+yubico-piv-tool -r Yubico -k -a import-certificate -s 9c -i secure-boot.crt
+yubico-piv-tool -r Yubico -k -a import-key -s 82 -i update.key --pin-policy=once --touch-policy=never
+yubico-piv-tool -r Yubico -k -a import-certificate -s 82 -i update.crt
 pkcs11-tool --module /usr/lib/x86_64-linux-gnu/libykcs11.so --login --list-objects
 ```
 
