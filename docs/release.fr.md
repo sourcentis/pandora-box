@@ -119,19 +119,26 @@ et le module : `PANDORA_BOX_SECURE_BOOT_KEY`, `PANDORA_BOX_UPDATE_KEY` et
 
 ## Publier une version { #making-a-release }
 
+Le numéro d'une version est sa date, en UTC : le tag `vAAAA.MM.JJ`, créé le
+jour de la publication ; `vAAAA.MM.JJ.2`, `.3`… pour une autre version le
+même jour, et un suffixe (`vAAAA.MM.JJ-rc1`) pour un essai qui n'est pas
+publié. `image/release.sh` refuse tout autre tag, ainsi qu'un tag dont la
+date n'est pas le jour de sa création. La version de l'image affichée par la
+borne est l'heure du tag, à la seconde (`AAAAMMJJHHMMSS`).
+
 Sur l'ordinateur de construction, avec la YubiKey branchée et
 [gh](https://cli.github.com/) connecté à GitHub :
 
 ```sh
-git tag -a v1.0.0 -m "PandoraBox 1.0.0"
-git push origin v1.0.0
-image/release.sh v1.0.0
+git tag -a v2026.11.03 -m "PandoraBox 2026.11.03"
+git push origin v2026.11.03
+image/release.sh v2026.11.03
 ```
 
 `image/release.sh` demande une fois le PIN de la YubiKey, puis :
 
 1. extrait les seuls fichiers du tag (`git archive`) dans
-   `release/v1.0.0/src/` : aucun thème local, identifiant ou clé de
+   `release/v2026.11.03/src/` : aucun thème local, identifiant ou clé de
    développement n'entre dans l'image ;
 2. vérifie le PIN avant la construction : signe un message de test avec les
    deux clés de la YubiKey et le vérifie avec les clés publiques du tag ; un
@@ -146,13 +153,13 @@ image/release.sh v1.0.0
    logicielle, signe les sommes de contrôle avec la clé de mise à jour, et
    vérifie chaque signature avec les clés publiques du tag ;
 5. crée un **brouillon** de version du tag sur GitHub avec les fichiers de
-   `release/v1.0.0/assets/`.
+   `release/v2026.11.03/assets/`.
 
 | Fichier | Contenu |
 |---|---|
-| `pandora-box-v1.0.0.raw.xz` | image disque, à écrire sur le disque de la borne |
-| `pandora-box-image-v1.0.0.tar` | mise à jour signée de l'image : `pandora-box-image/`, à extraire à la racine d'une clé USB ([Mises à jour du système](update.md)) |
-| `pandora-box-v1.0.0.cdx.json` | nomenclature logicielle (SBOM, CycloneDX 1.5) : les paquets Debian et Python de l'image, avec leurs versions |
+| `pandora-box-v2026.11.03.raw.xz` | image disque, à écrire sur le disque de la borne |
+| `pandora-box-image-v2026.11.03.tar` | mise à jour signée de l'image : `pandora-box-image/`, à extraire à la racine d'une clé USB ([Mises à jour du système](update.md)) |
+| `pandora-box-v2026.11.03.cdx.json` | nomenclature logicielle (SBOM, CycloneDX 1.5) : les paquets Debian et Python de l'image, avec leurs versions |
 | `secure-boot.crt`, `update.pem` | clés publiques de publication |
 | `SHA256SUMS`, `SHA256SUMS.sig` | sommes de contrôle, signées avec la clé de mise à jour |
 
@@ -169,7 +176,10 @@ test dans les emplacements et sous les noms de la YubiKey :
 ```sh
 image/softhsm-keys.sh /tmp/token
 cp /tmp/token/secure-boot.crt /tmp/token/update.pem image/release/   # dans un clone de test seulement
-echo 123456 | PANDORA_BOX_SOFTHSM=/tmp/token image/release.sh v0.0.0-test --no-publish
+git commit -m "Test keys" image/release/
+tag=v$(date -u +%Y.%m.%d)-test
+git tag -a "$tag" -m "Test release"
+echo 123456 | PANDORA_BOX_SOFTHSM=/tmp/token image/release.sh "$tag" --no-publish
 ```
 
 ## Reproduire une version { #reproducing-a-release }
@@ -190,8 +200,8 @@ Pour vérifier une version, téléchargez ses fichiers et construisez à nouveau
 son tag :
 
 ```sh
-gh release download v1.0.0 -D /tmp/v1.0.0
-image/reproduce.sh v1.0.0 /tmp/v1.0.0
+gh release download v2026.11.03 -D /tmp/v2026.11.03
+image/reproduce.sh v2026.11.03 /tmp/v2026.11.03
 ```
 
 `image/reproduce.sh` vérifie les fichiers avec leurs sommes de contrôle
@@ -230,7 +240,7 @@ publierait une fausse version donnerait le sien. Écrivez ensuite l'image
 ([Installation initiale](install.md#writing-the-image)) :
 
 ```sh
-xz -dc pandora-box-v1.0.0.raw.xz | sudo dd of=/dev/sdX bs=4M conv=fsync status=progress
+xz -dc pandora-box-v2026.11.03.raw.xz | sudo dd of=/dev/sdX bs=4M conv=fsync status=progress
 ```
 
 À son premier démarrage, la borne inscrit `secure-boot.crt` dans son

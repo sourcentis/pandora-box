@@ -2,7 +2,9 @@
 # Build a release of PandoraBox and publish it as a draft GitHub release
 # (docs/release.md):
 #   image/release.sh TAG [--no-publish]
-# TAG: a tag of the repository, pushed to GitHub. The image is built from the
+# TAG: a tag of the repository, pushed to GitHub, named after the date of the
+# release (UTC): vYYYY.MM.DD (.N for another release that day, -SUFFIX for a
+# test), the day it was created. The image is built from the
 # files of the tag only (git archive: no local theme, credential or key), with
 # the inputs of image/reproducible.sh (anyone can build it again and compare,
 # image/reproduce.sh), and signed with the keys of the release token
@@ -17,7 +19,7 @@
 set -eu
 
 usage() {
-    sed -n '2,19p' "$0" >&2
+    sed -n '2,18p' "$0" >&2
     exit 2
 }
 
@@ -37,6 +39,17 @@ if ! git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
     echo "error: no tag $tag" >&2
     exit 1
 fi
+# The version of a release is its date (UTC), the day its tag was created:
+# vYYYY.MM.DD, .N for another release the same day, -SUFFIX for a test
+day=$(date -u -d "@$(git for-each-ref --format='%(creatordate:unix)' "refs/tags/$tag")" +%Y.%m.%d)
+case "$tag" in
+"v$day" | "v$day".[0-9]* | "v$day"-?*) ;;
+*)
+    echo "error: the version of a release is its date: the tag $tag was created on $day (UTC)," >&2
+    echo "name it v$day (v$day.2 for another release that day, v$day-rc1 for a test)" >&2
+    exit 1
+    ;;
+esac
 if [ -n "$publish" ] && ! git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null; then
     echo "error: the tag $tag is not on GitHub (git push origin $tag)" >&2
     exit 1

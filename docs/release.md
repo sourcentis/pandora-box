@@ -114,18 +114,25 @@ module: `PANDORA_BOX_SECURE_BOOT_KEY`, `PANDORA_BOX_UPDATE_KEY` and
 
 ## Making a release
 
+The version of a release is its date, in UTC: the tag `vYYYY.MM.DD`,
+created the day of the release; `vYYYY.MM.DD.2`, `.3`… for another release
+the same day, and a suffix (`vYYYY.MM.DD-rc1`) for a test that is not
+published. `image/release.sh` refuses any other tag, and a tag whose date is
+not the day it was created. The image version shown by the kiosk is the time
+of the tag, to the second (`YYYYMMDDHHMMSS`).
+
 On the build computer, with the YubiKey plugged in and
 [gh](https://cli.github.com/) logged in to GitHub:
 
 ```sh
-git tag -a v1.0.0 -m "PandoraBox 1.0.0"
-git push origin v1.0.0
-image/release.sh v1.0.0
+git tag -a v2026.11.03 -m "PandoraBox 2026.11.03"
+git push origin v2026.11.03
+image/release.sh v2026.11.03
 ```
 
 `image/release.sh` asks for the PIN of the YubiKey once, then:
 
-1. extracts the files of the tag only (`git archive`) to `release/v1.0.0/src/`:
+1. extracts the files of the tag only (`git archive`) to `release/v2026.11.03/src/`:
    no local theme, credentials or development keys get into the image;
 2. checks the PIN before the build: signs a test message with both keys of
    the YubiKey and verifies it with the public keys of the tag; a wrong PIN
@@ -139,13 +146,13 @@ image/release.sh v1.0.0
    signs the checksums with the update key, and checks every signature with
    the public keys of the tag;
 5. creates a **draft** release of the tag on GitHub with the files of
-   `release/v1.0.0/assets/`.
+   `release/v2026.11.03/assets/`.
 
 | File | Content |
 |---|---|
-| `pandora-box-v1.0.0.raw.xz` | disk image, to write to the disk of the kiosk |
-| `pandora-box-image-v1.0.0.tar` | signed image update: `pandora-box-image/`, to extract at the root of a USB key ([System updates](update.md)) |
-| `pandora-box-v1.0.0.cdx.json` | software bill of materials (SBOM, CycloneDX 1.5): the Debian and Python packages of the image, with their versions |
+| `pandora-box-v2026.11.03.raw.xz` | disk image, to write to the disk of the kiosk |
+| `pandora-box-image-v2026.11.03.tar` | signed image update: `pandora-box-image/`, to extract at the root of a USB key ([System updates](update.md)) |
+| `pandora-box-v2026.11.03.cdx.json` | software bill of materials (SBOM, CycloneDX 1.5): the Debian and Python packages of the image, with their versions |
 | `secure-boot.crt`, `update.pem` | public release keys |
 | `SHA256SUMS`, `SHA256SUMS.sig` | checksums, signed with the update key |
 
@@ -161,7 +168,10 @@ the slots and labels of the YubiKey:
 ```sh
 image/softhsm-keys.sh /tmp/token
 cp /tmp/token/secure-boot.crt /tmp/token/update.pem image/release/   # in a test clone only
-echo 123456 | PANDORA_BOX_SOFTHSM=/tmp/token image/release.sh v0.0.0-test --no-publish
+git commit -m "Test keys" image/release/
+tag=v$(date -u +%Y.%m.%d)-test
+git tag -a "$tag" -m "Test release"
+echo 123456 | PANDORA_BOX_SOFTHSM=/tmp/token image/release.sh "$tag" --no-publish
 ```
 
 ## Reproducing a release
@@ -180,8 +190,8 @@ and check that it is made of the published source code and Debian packages.
 To check a release, download its files and build its tag again:
 
 ```sh
-gh release download v1.0.0 -D /tmp/v1.0.0
-image/reproduce.sh v1.0.0 /tmp/v1.0.0
+gh release download v2026.11.03 -D /tmp/v2026.11.03
+image/reproduce.sh v2026.11.03 /tmp/v2026.11.03
 ```
 
 `image/reproduce.sh` checks the files with their signed checksums, builds the
@@ -217,7 +227,7 @@ release would give their own. Then write the image
 ([Initial installation](install.md#writing-the-image)):
 
 ```sh
-xz -dc pandora-box-v1.0.0.raw.xz | sudo dd of=/dev/sdX bs=4M conv=fsync status=progress
+xz -dc pandora-box-v2026.11.03.raw.xz | sudo dd of=/dev/sdX bs=4M conv=fsync status=progress
 ```
 
 At its first boot, the kiosk enrolls `secure-boot.crt` in its firmware. A
