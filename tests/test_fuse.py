@@ -189,12 +189,20 @@ def test_stuck_driver_is_killed(tmp_path: Path) -> None:
 
 def test_busy_driver_is_not_killed(tmp_path: Path) -> None:
     """Requests waiting while the device reads: a slow device, not a stuck driver."""
-    d = driver(tmp_path, "import time; time.sleep(1)", waiting="1", timeout=0.3)
+    # The I/O counters move 20 times per timeout: a CI runner busy enough to
+    # delay this thread for a whole second is not a realistic case
+    unmounted = tmp_path / "unmounted"
+    code = f"import os, time\nwhile not os.path.exists({str(unmounted)!r}): time.sleep(0.05)"
+    d = driver(tmp_path, code, waiting="1", timeout=1.0)
     stat = tmp_path / "block" / "sdb1" / "stat"
-    for sectors in range(10):
+    sectors = 0
+    deadline = time.monotonic() + 2 * d.timeout
+    while time.monotonic() < deadline:
+        sectors += 1
         stat.write_text(f"10 0 {sectors} 0 0 0 0 0 0 0 0\n")
-        time.sleep(0.08)
+        time.sleep(0.05)
     assert d.process.poll() is None
+    unmounted.touch()
     d.stop()
     assert d.failure is None
 
