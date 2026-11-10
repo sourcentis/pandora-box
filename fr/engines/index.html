@@ -1686,9 +1686,13 @@ correspondance est <strong>malveillante</strong> (détection
 <ul>
 <li><strong>Entrée</strong> : l'export SHA-256 complet. Le télécharger nécessite une
   Auth-Key abuse.ch gratuite (<a href="https://auth.abuse.ch/">auth.abuse.ch</a>),
-  envoyée dans l'en-tête HTTP <code>Auth-Key</code>, depuis
-  <code>https://bazaar.abuse.ch/export/txt/sha256/full/</code>. L'export est une
-  archive zip contenant <code>full_sha256.txt</code> : un en-tête de commentaires <code>#</code>,
+  placée dans l'URL :
+  <code>https://mb-api.abuse.ch/v2/files/exports/&lt;Auth-Key&gt;/sha256_full.txt.zip</code>
+  (l'ancienne <code>https://bazaar.abuse.ch/export/txt/sha256/full/</code> répond
+  HTTP 410). La clé n'est jamais écrite dans les journaux ni dans le jeu ;
+  l'URL d'un miroir peut contenir le paramètre <code>{auth_key}</code>, et reçoit aussi
+  la clé dans l'en-tête HTTP <code>Auth-Key</code>. L'export est une archive zip
+  contenant un fichier texte : un en-tête de commentaires <code>#</code>,
   puis une empreinte SHA-256 hexadécimale en minuscules par ligne. Le
   convertisseur accepte l'archive zip ou le fichier texte. Toute autre ligne
   est une erreur : un export malformé n'est jamais chargé en partie. En

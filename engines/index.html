@@ -1675,9 +1675,13 @@ them, and prints the matching configuration (an unsigned set: see
 (detection <code>MalwareBazaar.KnownMalware</code>).</p>
 <ul>
 <li><strong>Input</strong>: the full SHA-256 export. Downloading it requires a free abuse.ch
-  Auth-Key (<a href="https://auth.abuse.ch/">auth.abuse.ch</a>), sent in the <code>Auth-Key</code>
-  HTTP header, from <code>https://bazaar.abuse.ch/export/txt/sha256/full/</code>. The
-  export is a zip archive holding <code>full_sha256.txt</code>: a <code>#</code> comment header,
+  Auth-Key (<a href="https://auth.abuse.ch/">auth.abuse.ch</a>), part of the URL:
+  <code>https://mb-api.abuse.ch/v2/files/exports/&lt;Auth-Key&gt;/sha256_full.txt.zip</code>
+  (the former <code>https://bazaar.abuse.ch/export/txt/sha256/full/</code> answers
+  HTTP 410). The key is never written in the logs nor in the set; a mirror
+  URL can hold the <code>{auth_key}</code> placeholder, and also receives the key in the
+  <code>Auth-Key</code> HTTP header. The export is a zip archive holding one text file: a
+  <code>#</code> comment header,
   then one lower case hexadecimal SHA-256 per line. The converter accepts the
   zip archive or the text file. Any other line is an error: a malformed export
   is never partially loaded. In October 2026, the export held 1.1 million
