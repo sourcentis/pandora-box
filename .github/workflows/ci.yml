@@ -47,6 +47,17 @@ jobs:
         # the tests: no linux-modules-extra (not always published for the
         # kernel of the runner)
         run: sudo modprobe -a loop vfat ext4 fuse
+      - name: Unload the AppArmor profiles of bubblewrap
+        # Ubuntu 26.04 attaches its bwrap-userns-restrict profile to
+        # /usr/bin/bwrap, even in a privileged container: the programs bwrap
+        # starts get no capability (unpriv_bwrap), so setpriv cannot switch
+        # to the sandbox user. The kiosk (Debian) has no such profile.
+        run: |
+          sudo sed -n 's/^\([^ ]*bwrap[^ ]*\) (.*/\1/p' /sys/kernel/security/apparmor/profiles 2>/dev/null \
+            | while read -r profile; do
+                echo "Unloading AppArmor profile $profile"
+                printf %s "$profile" | sudo tee /sys/kernel/security/apparmor/.remove >/dev/null
+              done
       - name: Run tests in a privileged container (real clamd, YARA-X, hash engines)
         run: tests/e2e/run.sh
 
