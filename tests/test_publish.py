@@ -26,6 +26,7 @@ from pandora_box.publish import (
     Downloader,
     PublishError,
     development_config,
+    malwarebazaar_url,
     publish,
 )
 
@@ -75,7 +76,9 @@ class FakeDownloader(Downloader):
 def contents(tmp_path: Path) -> dict[str, bytes]:
     return {
         YARA_FORGE: zip_of("packages/core/yara-rules-core.yar", RULE),
-        MALWAREBAZAAR: zip_of("full_sha256.txt", f"# export\n{SAMPLE_SHA256}\n".encode()),
+        malwarebazaar_url(MALWAREBAZAAR, "secret"): zip_of(
+            "full_sha256.txt", f"# export\n{SAMPLE_SHA256}\n".encode()
+        ),
         HASHLOOKUP: bloom_bytes(tmp_path),
     }
 
@@ -165,6 +168,35 @@ def test_malwarebazaar_needs_an_auth_key(
     with pytest.raises(PublishError, match="Auth-Key"):
         publish(tmp_path / "set", ["malwarebazaar"], tmp_path / "cache", None,
                 downloader=downloader, log=lambda _: None)  # fmt: skip
+
+
+def test_the_auth_key_is_not_disclosed(
+    tmp_path: Path, contents: dict[str, bytes], freshclam: str
+) -> None:
+    secret = "auth-key-0123456789"  # noqa: S105  (test value)
+    contents = {url.replace("secret", secret): data for url, data in contents.items()}
+    downloader = FakeDownloader(tmp_path / "cache" / "downloads", contents)
+    logs: list[str] = []
+    publish(tmp_path / "set", ["malwarebazaar"], tmp_path / "cache", None, auth_key=secret,
+            downloader=downloader, log=logs.append, test_databases=False)  # fmt: skip
+    # Sent in the path of the URL (abuse.ch)
+    assert downloader.downloads == [malwarebazaar_url(MALWAREBAZAAR, secret)]
+    assert secret in downloader.downloads[0]
+    # Neither in the logs, nor in the set, nor in the cache
+    assert logs and not any(secret in line for line in logs)
+    for path in [*(tmp_path / "set").rglob("*"), *(tmp_path / "cache").rglob("*.json")]:
+        if path.is_file():
+            assert secret.encode() not in path.read_bytes(), path
+
+
+def test_malwarebazaar_url() -> None:
+    assert malwarebazaar_url(MALWAREBAZAAR, "a/b c") == (
+        "https://mb-api.abuse.ch/v2/files/exports/a%2Fb%20c/sha256_full.txt.zip"
+    )
+    # A mirror without the placeholder only gets the Auth-Key header
+    assert malwarebazaar_url("https://mirror.example/full.zip", "k") == (
+        "https://mirror.example/full.zip"
+    )
 
 
 def test_signature_base_only_keeps_yara_files(tmp_path: Path, freshclam: str) -> None:

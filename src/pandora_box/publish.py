@@ -43,7 +43,10 @@ YARA_FORGE = (
     "https://github.com/YARAHQ/yara-forge/releases/latest/download/yara-forge-rules-core.zip"
 )
 SIGNATURE_BASE = "https://github.com/Neo23x0/signature-base/archive/refs/heads/master.tar.gz"
-MALWAREBAZAAR = "https://bazaar.abuse.ch/export/txt/sha256/full/"
+# The abuse.ch Auth-Key is part of the path: {auth_key} is replaced by it (the
+# former https://bazaar.abuse.ch/export/txt/sha256/full/ answers HTTP 410)
+MALWAREBAZAAR = "https://mb-api.abuse.ch/v2/files/exports/{auth_key}/sha256_full.txt.zip"
+AUTH_KEY_PLACEHOLDER = "{auth_key}"
 HASHLOOKUP = "https://cra.circl.lu/hashlookup/hashlookup-full.bloom"
 CLAMAV_MIRROR = "database.clamav.net"
 
@@ -125,7 +128,19 @@ class Downloader:
         response: IO[bytes] = self.opener.open(request, timeout=self.timeout)
         return response
 
-    def fetch(self, url: str, name: str, headers: Mapping[str, str] | None = None) -> Download:
+    def fetch(
+        self,
+        url: str,
+        name: str,
+        headers: Mapping[str, str] | None = None,
+        shown_url: str | None = None,
+    ) -> Download:
+        """Download url into the cache as name.
+
+        shown_url: the URL written in the logs, errors and cache metadata, in
+        place of url (a URL holding a secret).
+        """
+        shown_url = url if shown_url is None else shown_url
         self.cache.mkdir(parents=True, exist_ok=True)
         target = self.cache / name
         meta_path = self.cache / f"{name}.json"
@@ -134,7 +149,7 @@ class Downloader:
         except (OSError, ValueError):
             meta = {}
         request_headers = {"User-Agent": "pandora-box-publish", **(headers or {})}
-        if target.exists() and meta.get("url") == url:
+        if target.exists() and meta.get("url") == shown_url:
             if meta.get("etag"):
                 request_headers["If-None-Match"] = meta["etag"]
             if meta.get("last_modified"):
@@ -147,10 +162,10 @@ class Downloader:
                 return Download(
                     target, str(meta.get("sha256", "")), cached=True, date=str(meta.get("date", ""))
                 )
-            raise PublishError(f"{url}: HTTP {ex.code}") from ex
+            raise PublishError(f"{shown_url}: HTTP {ex.code}") from ex
         except (urllib.error.URLError, OSError) as ex:
-            raise PublishError(f"{url}: {ex}") from ex
-        self.log(f"{name}: downloading {url}")
+            raise PublishError(f"{shown_url}: {ex}") from ex
+        self.log(f"{name}: downloading {shown_url}")
         digest = hashlib.sha256()
         partial = target.with_name(f".{name}.part")
         with response, partial.open("wb") as out:
@@ -162,7 +177,7 @@ class Downloader:
             last_modified = response_headers.get("Last-Modified", "")
         partial.replace(target)
         meta = {
-            "url": url,
+            "url": shown_url,
             "etag": etag,
             "last_modified": last_modified,
             "sha256": digest.hexdigest(),
@@ -225,6 +240,11 @@ def fetch_signature_base(downloader: Downloader, output: Path, url: str = SIGNAT
     _describe(folder.parent, folder.name, url, archive.sha256[:16])
 
 
+def malwarebazaar_url(url: str, auth_key: str) -> str:
+    """url with its {auth_key} placeholder replaced by the abuse.ch Auth-Key."""
+    return url.replace(AUTH_KEY_PLACEHOLDER, urllib.parse.quote(auth_key, safe=""))
+
+
 def fetch_malwarebazaar(
     downloader: Downloader, output: Path, auth_key: str, url: str = MALWAREBAZAAR
 ) -> None:
@@ -235,7 +255,14 @@ def fetch_malwarebazaar(
             "MalwareBazaar needs an abuse.ch Auth-Key (free: https://auth.abuse.ch/): "
             "set ABUSECH_AUTH_KEY, or leave malwarebazaar out of --sources"
         )
-    export = downloader.fetch(url, "malwarebazaar-full-sha256.zip", {"Auth-Key": auth_key})
+    # The key in the path (abuse.ch) and in the Auth-Key header (a mirror), never
+    # in the logs nor in the manifest of the set: url keeps the placeholder
+    export = downloader.fetch(
+        malwarebazaar_url(url, auth_key),
+        "malwarebazaar-full-sha256.zip",
+        {"Auth-Key": auth_key},
+        shown_url=url,
+    )
     target = output / MALWAREBAZAAR_DB
     target.parent.mkdir(parents=True, exist_ok=True)
     try:

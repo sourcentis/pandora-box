@@ -17,6 +17,7 @@ from pandora_box.publish import (
     YARA_FORGE_RULES,
     PublishError,
     keep_files,
+    malwarebazaar_url,
 )
 from pandora_box.sigsets import (
     MANIFEST,
@@ -97,7 +98,9 @@ def downloader(tmp_path: Path, malwarebazaar: str = SAMPLE) -> FakeDownloader:
         tmp_path / "update" / "staging-sources" / "downloads",
         {
             YARA_FORGE: zip_of("packages/core/yara-rules-core.yar", RULE),
-            MALWAREBAZAAR: zip_of("full_sha256.txt", f"# export\n{malwarebazaar}\n".encode()),
+            malwarebazaar_url(MALWAREBAZAAR, "secret"): zip_of(
+                "full_sha256.txt", f"# export\n{malwarebazaar}\n".encode()
+            ),
         },
     )
 

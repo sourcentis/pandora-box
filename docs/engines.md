@@ -53,9 +53,13 @@ Offline list of SHA-256 hashes of known malware, from
 (detection `MalwareBazaar.KnownMalware`).
 
 - **Input**: the full SHA-256 export. Downloading it requires a free abuse.ch
-  Auth-Key ([auth.abuse.ch](https://auth.abuse.ch/)), sent in the `Auth-Key`
-  HTTP header, from `https://bazaar.abuse.ch/export/txt/sha256/full/`. The
-  export is a zip archive holding `full_sha256.txt`: a `#` comment header,
+  Auth-Key ([auth.abuse.ch](https://auth.abuse.ch/)), part of the URL:
+  `https://mb-api.abuse.ch/v2/files/exports/<Auth-Key>/sha256_full.txt.zip`
+  (the former `https://bazaar.abuse.ch/export/txt/sha256/full/` answers
+  HTTP 410). The key is never written in the logs nor in the set; a mirror
+  URL can hold the `{auth_key}` placeholder, and also receives the key in the
+  `Auth-Key` HTTP header. The export is a zip archive holding one text file: a
+  `#` comment header,
   then one lower case hexadecimal SHA-256 per line. The converter accepts the
   zip archive or the text file. Any other line is an error: a malformed export
   is never partially loaded. In October 2026, the export held 1.1 million
