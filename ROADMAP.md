@@ -21,15 +21,12 @@ The open tasks of the phases below, by priority.
 
 **1. First public release**
 
-1. Create the release keys and publish their fingerprints (phase 2)
-2. Write the deployment guide (phase 6)
-3. Physical hardening and assembly guide (phase 2)
+1. Write the deployment guide (phase 6)
+2. Define the publication schedule of the signature sets (phase 2)
 
-**2. Hardening and user features**
+**2. Fleet management**
 
 1. Update server: one image per kiosk identifier, checked at boot and every hour (phase 5)
-2. Scan receipt for the user (phase 5)
-3. Refused USB devices shown on the kiosk screen and reported to the SIEM (phases 2 and 3)
 
 **3. Later**
 
@@ -37,7 +34,6 @@ The open tasks of the phases below, by priority.
 2. Mapping to NIS2 and ISO 27001 (phase 6)
 3. Executables with `capa`, content disarm and reconstruction with Dangerzone (phase 4)
 4. Software TPM, once measured boot is used (phase 2)
-5. Maintenance console or SSH, to reconsider (phase 2)
 
 ---
 
