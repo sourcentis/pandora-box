@@ -59,6 +59,9 @@ administrations. Elle tourne sur un petit ordinateur reconditionné avec un
 
 ### Installer une borne { #install-a-kiosk }
 
+Pour préparer un déploiement dans une organisation (clés, emplacements,
+réseau, exploitation), commencez par le [Guide de déploiement](deployment.md).
+
 | Étape | Page |
 |---|---|
 | 1. Choisir le matériel | [Matériel](hardware.md) : ordinateur et écran validés, boîtier |

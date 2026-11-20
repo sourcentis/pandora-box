@@ -53,6 +53,9 @@ and works without network.
 
 ### Install a kiosk
 
+To plan a deployment in an organization (keys, places, network, operation),
+start with the [Deployment guide](deployment.md).
+
 | Step | Page |
 |---|---|
 | 1. Choose the hardware | [Hardware](hardware.md): validated computer and screen, enclosure |

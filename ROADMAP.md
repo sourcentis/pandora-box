@@ -21,8 +21,7 @@ The open tasks of the phases below, by priority.
 
 **1. First public release**
 
-1. Write the deployment guide (phase 6)
-2. Define the publication schedule of the signature sets (phase 2)
+1. Define the publication schedule of the signature sets (phase 2)
 
 **2. Fleet management**
 
@@ -283,7 +282,7 @@ An organization of about a hundred kiosks publishes their updates on its own ser
 
 - [x] Detection regression test corpus
 - [x] Threat model ([docs/threat-model.md](docs/threat-model.md))
-- [ ] Write the deployment guide
+- [x] Write the deployment guide ([docs/deployment.md](docs/deployment.md))
 - [ ] Fuzzing of the entry points
 - [ ] External security audit of the image
 - [ ] Mapping to NIS2 and ISO 27001 requirements (control 7.10 "Storage media")

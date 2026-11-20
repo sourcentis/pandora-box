@@ -60,6 +60,7 @@ plugins:
             GETTING STARTED: DÉMARRAGE
             -- Hardware: -- Matériel
             -- Assembly: -- Assemblage
+            -- Deployment guide: -- Guide de déploiement
             INSTALLATION: INSTALLATION
             -- Building the image: -- Construction de l'image
             -- Releases: -- Versions publiées
@@ -106,6 +107,7 @@ nav:
       - Introduction: index.md
       - -- Hardware: hardware.md
       - -- Assembly: assembly.md
+      - -- Deployment guide: deployment.md
   - INSTALLATION:
       - -- Building the image: build.md
       - -- Releases: release.md

@@ -71,6 +71,8 @@ image/build-test.sh && image/vm.sh test         # optional: test it in a virtual
 
 Then write `image/mkosi.output/pandora-box.raw` to the disk of the kiosk, enroll the Secure Boot key and install a signature set from a USB key. Every step is described in the documentation: [building the image](https://sourcentis.github.io/pandora-box/build/), [testing with QEMU](https://sourcentis.github.io/pandora-box/vm/), [initial installation](https://sourcentis.github.io/pandora-box/install/), and the maintenance: [signatures](https://sourcentis.github.io/pandora-box/signatures/), [system updates](https://sourcentis.github.io/pandora-box/update/), [logs](https://sourcentis.github.io/pandora-box/logs/).
 
+To deploy kiosks in an organization (keys, places, network, operation), see the [deployment guide](https://sourcentis.github.io/pandora-box/deployment/).
+
 To work on the code, see the [development guide](https://sourcentis.github.io/pandora-box/development/).
 
 ## 📜 **Roadmap**

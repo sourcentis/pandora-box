@@ -71,6 +71,8 @@ image/build-test.sh && image/vm.sh test         # facultatif : la teste dans une
 
 Écrivez ensuite `image/mkosi.output/pandora-box.raw` sur le disque de la borne, enrôlez la clé Secure Boot et installez un jeu de signatures depuis une clé USB. Chaque étape est décrite dans la documentation : [construction de l'image](https://sourcentis.github.io/pandora-box/fr/build/), [test avec QEMU](https://sourcentis.github.io/pandora-box/fr/vm/), [installation initiale](https://sourcentis.github.io/pandora-box/fr/install/), et la maintenance : [signatures](https://sourcentis.github.io/pandora-box/fr/signatures/), [mises à jour du système](https://sourcentis.github.io/pandora-box/fr/update/), [journaux](https://sourcentis.github.io/pandora-box/fr/logs/).
 
+Pour déployer des bornes dans une organisation (clés, emplacements, réseau, exploitation), voir le [guide de déploiement](https://sourcentis.github.io/pandora-box/fr/deployment/).
+
 Pour travailler sur le code, voir le [guide de développement](https://sourcentis.github.io/pandora-box/fr/development/).
 
 ## 📜 **Feuille de route**
