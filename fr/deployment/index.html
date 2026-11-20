@@ -1,0 +1,2358 @@
+
+<!doctype html>
+<html lang="fr" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Open source USB decontamination kiosk">
+      
+      
+      
+        <link rel="canonical" href="https://sourcentis.github.io/pandora-box/fr/deployment/">
+      
+      
+        <link rel="prev" href="../assembly/">
+      
+      
+        <link rel="next" href="../build/">
+      
+      
+        
+          <link rel="alternate" href="../../deployment/" hreflang="en">
+        
+          <link rel="alternate" href="./" hreflang="fr">
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>-- Guide de déploiement - PandoraBox</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../css/overrides.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#guide-de-deploiement" class="md-skip">
+          Aller au contenu
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="En-tête">
+    <a href="../" title="PandoraBox" class="md-header__button md-logo" aria-label="PandoraBox" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PandoraBox
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              -- Guide de déploiement
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+      <div class="md-header__option">
+  <div class="md-select">
+    
+    <button class="md-header__button md-icon" aria-label="Sélectionner la langue">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12.87 15.07-2.54-2.51.03-.03A17.5 17.5 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2zm-2.62 7 1.62-4.33L19.12 17z"/></svg>
+    </button>
+    <div class="md-select__inner">
+      <ul class="md-select__list">
+        
+          <li class="md-select__item">
+            <a href="../../deployment/" hreflang="en" class="md-select__link">
+              English
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="./" hreflang="fr" class="md-select__link">
+              Français
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</div>
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Rechercher" placeholder="Rechercher" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Recherche">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Effacer" aria-label="Effacer" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initialisation de la recherche
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/sourcentis/pandora-box" title="Aller au dépôt" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../" title="PandoraBox" class="md-nav__button md-logo" aria-label="PandoraBox" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PandoraBox
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/sourcentis/pandora-box" title="Aller au dépôt" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DÉMARRAGE
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_1" id="__nav_1_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    DÉMARRAGE
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../hardware/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    -- Matériel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../assembly/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    -- Assemblage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    -- Guide de déploiement
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    -- Guide de déploiement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table des matières
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#in-short" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        En bref
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Décisions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Décisions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#whose-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quelles clés
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#offline-or-online" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hors ligne ou en ligne
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kiosk-or-file-transfer-station" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Borne ou borne de transfert
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-many-kiosks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Combien de bornes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#keys-and-roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clés et rôles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hardware" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Matériel
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#placement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Emplacement
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#network" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Réseau
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#building-the-images" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Construire les images
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pilot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Borne pilote
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installing-the-kiosks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installer les bornes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#users" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Utilisateurs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#operation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exploitation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Exploitation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recurring-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tâches récurrentes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-to-watch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ce qu'il faut surveiller
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#detections" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Détections
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pannes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-on-the-kiosk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Données sur la borne
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decommissioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retrait d'une borne
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    INSTALLATION
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    INSTALLATION
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    -- Construction de l'image
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    -- Versions publiées
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    -- Test avec QEMU
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    -- Installation initiale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MAINTENANCE
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    MAINTENANCE
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../signatures/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    -- Signatures
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    -- Mises à jour du système
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../logs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    -- Journaux
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../siem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    -- Export vers un SIEM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../airgap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    -- Copie vers un serveur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RÉFÉRENCE
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    RÉFÉRENCE
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../interface/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    -- Interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    -- Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../engines/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    -- Moteurs de détection
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../image/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    -- Fonctionnement de l'image
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../threat-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    -- Modèle de menace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DÉVELOPPEMENT
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    DÉVELOPPEMENT
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    -- Développement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table des matières
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#in-short" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        En bref
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Décisions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Décisions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#whose-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quelles clés
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#offline-or-online" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hors ligne ou en ligne
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kiosk-or-file-transfer-station" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Borne ou borne de transfert
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-many-kiosks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Combien de bornes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#keys-and-roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clés et rôles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hardware" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Matériel
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#placement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Emplacement
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#network" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Réseau
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#building-the-images" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Construire les images
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pilot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Borne pilote
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installing-the-kiosks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installer les bornes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#users" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Utilisateurs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#operation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exploitation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Exploitation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recurring-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tâches récurrentes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-to-watch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ce qu'il faut surveiller
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#detections" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Détections
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pannes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-on-the-kiosk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Données sur la borne
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decommissioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retrait d'une borne
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/sourcentis/pandora-box/edit/main/docs/deployment.fr.md" title="Editer cette page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/sourcentis/pandora-box/raw/main/docs/deployment.fr.md" title="Consulter la source de cette page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
+    </a>
+  
+
+
+<h1 id="guide-de-deploiement">Guide de déploiement<a class="headerlink" href="#guide-de-deploiement" title="Permanent link">&para;</a></h1>
+<p>Cette page s'adresse à une organisation qui déploie des bornes PandoraBox :
+les décisions à prendre d'abord, les clés et les personnes qui les
+détiennent, l'emplacement des bornes, le réseau dont elles ont besoin, la
+mise en service, puis l'exploitation courante. Les étapes techniques sont
+décrites dans les autres pages ; celle-ci dit lesquelles suivre, dans quel
+ordre, et pourquoi.</p>
+<h2 id="in-short">En bref<a class="headerlink" href="#in-short" title="Permanent link">&para;</a></h2>
+<ol>
+<li><a href="#decisions">Décidez</a> : quelles clés, hors ligne ou en ligne, borne ou
+   borne de transfert de fichiers, combien de bornes.</li>
+<li><a href="#keys-and-roles">Préparez les clés</a> et désignez les personnes qui les
+   détiennent.</li>
+<li><a href="#hardware">Choisissez le matériel</a> et <a href="#placement">l'emplacement</a> des
+   bornes.</li>
+<li><a href="#network">Ouvrez les flux réseau</a> des bornes en ligne.</li>
+<li><a href="#building-the-images">Construisez l'image</a> de l'organisation et
+   <a href="#pilot">testez-la</a> sur une borne pilote.</li>
+<li><a href="#installing-the-kiosks">Installez les bornes</a>, puis
+   <a href="#users">informez les utilisateurs</a>.</li>
+<li><a href="#operation">Exploitez-les</a> : signatures, mises à jour de l'image,
+   journaux, détections.</li>
+</ol>
+<h2 id="decisions">Décisions<a class="headerlink" href="#decisions" title="Permanent link">&para;</a></h2>
+<h3 id="whose-keys">Quelles clés<a class="headerlink" href="#whose-keys" title="Permanent link">&para;</a></h3>
+<p>Une borne fait confiance à deux clés, fixées à son installation
+(<a href="../release/#release-keys">Versions publiées</a>) : la <strong>clé Secure Boot</strong>
+décide de ce qu'elle démarre, la <strong>clé de mise à jour</strong> des jeux de
+signatures, mises à jour de l'image et demandes de maintenance qu'elle
+accepte.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Convient à</th>
+<th>Conséquences</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Image publiée par le projet</strong></td>
+<td>Une évaluation, une borne sur le matériel de référence</td>
+<td>Prête à écrire et vérifiable (<a href="../release/#verifying-a-release">Vérifier une version</a>). Aucune personnalisation : thème intégré, configuration par défaut, pas de profil <code>online</code>. Sa règle USBGuard autorise un seul contrôleur tactile, par son numéro de série et son port : un autre exemplaire de l'écran est bloqué. Chaque jeu de signatures et chaque demande de maintenance doit être signé par la clé de mise à jour du projet</td>
+</tr>
+<tr>
+<td><strong>Image de l'organisation</strong></td>
+<td>Tout déploiement en production</td>
+<td>L'organisation construit son image (<a href="../build/">Construction de l'image</a>) avec ses propres clés, et choisit sa configuration, son thème, la règle de son écran tactile, son profil et ses secrets. Elle garde ses clés et publie ses propres jeux de signatures</td>
+</tr>
+</tbody>
+</table>
+<p>En pratique, un déploiement en production construit sa propre image : il
+lui faut sa propre règle d'écran tactile, le nom de chaque borne, souvent
+son thème et le profil <code>online</code>, et une clé de mise à jour qu'il détient
+lui-même, pour signer ses jeux de signatures et ses demandes de
+maintenance. La suite de cette page le suppose.</p>
+<p>Une borne installée avec certaines clés n'accepte que les mises à jour
+signées avec elles. Changer de clés impose d'écrire une nouvelle image sur
+son disque (<a href="../install/">Installation initiale</a>).</p>
+<h3 id="offline-or-online">Hors ligne ou en ligne<a class="headerlink" href="#offline-or-online" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Hors ligne (sans profil)</th>
+<th>En ligne (<code>--profile online</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Réseau</td>
+<td>Aucun : l'image n'a aucune configuration réseau</td>
+<td>Réseau filaire, DHCP, flux sortants uniquement (<a href="#network">Réseau</a>)</td>
+</tr>
+<tr>
+<td>Signatures</td>
+<td>Une clé de mise à jour des signatures, insérée par un exploitant</td>
+<td>Téléchargées par la borne toutes les 6 heures, depuis les sources ou depuis un jeu publié par l'organisation</td>
+</tr>
+<tr>
+<td>Mises à jour de l'image</td>
+<td>Une clé USB</td>
+<td>Une clé USB, ou une mise à jour publiée (<code>updates.image_url</code>)</td>
+</tr>
+<tr>
+<td>Journaux</td>
+<td>Une clé de maintenance</td>
+<td>Envoyés à un SIEM au fil de l'eau ; clé de maintenance aussi</td>
+</tr>
+<tr>
+<td>Horloge</td>
+<td>Horloge matérielle, jamais corrigée</td>
+<td>NTP</td>
+</tr>
+<tr>
+<td>Secrets dans l'image</td>
+<td>Aucun</td>
+<td>Auth-Key abuse.ch, et la clé SSH d'une borne de transfert : l'image ne doit pas sortir de l'organisation</td>
+</tr>
+</tbody>
+</table>
+<p>Une borne hors ligne a la plus petite surface d'attaque, mais ses
+signatures ne sont pas plus fraîches que le dernier passage d'un
+exploitant, et ses journaux n'arrivent à l'organisation que quand quelqu'un
+les rapporte. La borne prévient à l'écran quand ses signatures ont plus de
+7 jours (<a href="../engines/#signature-freshness">Fraîcheur des signatures</a>) :
+prévoyez un passage au moins chaque semaine, ou choisissez le profil
+<code>online</code>.</p>
+<h3 id="kiosk-or-file-transfer-station">Borne ou borne de transfert<a class="headerlink" href="#kiosk-or-file-transfer-station" title="Permanent link">&para;</a></h3>
+<p>Une borne analyse la clé et supprime les fichiers dangereux. Une <strong>borne
+de transfert de fichiers</strong> copie en plus les fichiers sains des clés
+vérifiées sur un serveur de l'organisation, et écrit sur les clés les
+fichiers que le réseau protégé leur a laissés
+(<a href="../airgap/">Copie vers un serveur</a>). Elle demande le profil <code>online</code>, un
+serveur joignable en SSH, et ses secrets dans l'image.</p>
+<p>Choisissez une borne de transfert quand les fichiers doivent entrer dans
+un réseau isolé ou en sortir : les utilisateurs ne branchent alors jamais
+leurs clés sur un poste de ce réseau.</p>
+<h3 id="how-many-kiosks">Combien de bornes<a class="headerlink" href="#how-many-kiosks" title="Permanent link">&para;</a></h3>
+<p>Chaque borne se nomme dans ses journaux et ses messages SIEM avec
+<code>kiosk.name</code> (<a href="../configuration/">Configuration</a>). Ce réglage fait partie de
+la configuration, donc de l'image : sans lui, toutes les bornes s'appellent
+<code>pandora-box</code>, le nom d'hôte de l'image. Pour distinguer les bornes dans le
+SIEM et dans les exports de maintenance, construisez une image par borne,
+avec les mêmes clés, seul son nom changeant. Tenez la liste des bornes :
+nom, emplacement, profil, version de l'image.</p>
+<h2 id="keys-and-roles">Clés et rôles<a class="headerlink" href="#keys-and-roles" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Rôle</th>
+<th>Détient</th>
+<th>Fait</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Détenteurs des clés</strong> (deux personnes)</td>
+<td>La clé Secure Boot et la clé de mise à jour, sur deux YubiKey, et leur PIN (<a href="../release/#release-keys">Clés de publication</a>)</td>
+<td>Signent les images, les mises à jour de l'image, les jeux de signatures et les demandes de maintenance</td>
+</tr>
+<tr>
+<td><strong>Constructeur</strong></td>
+<td>L'ordinateur de construction, avec Docker et les sources</td>
+<td>Construit les images et les mises à jour de l'image</td>
+</tr>
+<tr>
+<td><strong>Exploitants</strong></td>
+<td>Le mot de passe superviseur du BIOS, les clés USB de maintenance</td>
+<td>Installent les bornes, apportent les jeux de signatures, les mises à jour de l'image et les clés de maintenance, vérifient les bornes</td>
+</tr>
+<tr>
+<td><strong>Équipe sécurité</strong></td>
+<td>Le SIEM, les exports de maintenance</td>
+<td>Suit les détections, les périphériques refusés, les bornes dont les signatures sont anciennes</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>Créez les clés une seule fois, sur un ordinateur hors ligne, dans
+  <strong>deux</strong> YubiKey (<a href="../release/#creating-the-keys">Créer les clés</a>) ;
+  gardez la seconde dans un coffre, à part de la première. Une clé Secure
+  Boot perdue impose de réinstaller chaque borne à la main ; une clé de
+  mise à jour perdue, qu'elles ne reçoivent plus ni jeux de signatures ni
+  mises à jour de l'image.</li>
+<li>Les clés de développement que génère <code>image/build.sh</code>
+  (<code>image/mkosi.key</code>, <code>image/update.key</code>) sont des fichiers sur
+  l'ordinateur de construction : ne les utilisez jamais pour une borne en
+  production.</li>
+<li>Le mot de passe superviseur du BIOS protège Secure Boot et l'ordre de
+  démarrage de chaque borne : gardez-le avec les clés, pas sur la borne.</li>
+<li>L'Auth-Key abuse.ch et la clé SSH d'une borne de transfert sont dans
+  l'image d'une borne en ligne : traitez les fichiers d'image et les
+  disques des bornes comme confidentiels.</li>
+</ul>
+<h2 id="hardware">Matériel<a class="headerlink" href="#hardware" title="Permanent link">&para;</a></h2>
+<p>Utilisez le matériel validé : un Lenovo ThinkCentre M720q Tiny et un écran
+tactile Waveshare 7 pouces, dans le boîtier imprimé en 3D
+(<a href="../hardware/">Matériel</a>, <a href="../assembly/">Assemblage</a>). Un autre ordinateur ou
+un autre écran demande ses propres réglages : le mode de l'écran, la règle
+de son écran tactile, le contrôleur de disque dans l'initrd. Testez-le
+d'abord sur une borne pilote.</p>
+<p>Prévoyez pour chaque borne :</p>
+<ul>
+<li>2 Go de mémoire au moins (clamd seul en utilise environ 1 Go) ; avec
+  <code>scan.workers = "auto"</code>, chaque fichier analysé en parallèle prend
+  256 Mo de plus, soit 4 Go pour analyser six fichiers à la fois
+  (<a href="../configuration/#reference">Configuration</a>) ;</li>
+<li>un disque de 32 Go ou plus : les deux emplacements système (environ
+  2,7 Go), les jeux de signatures (environ 1,2 Go chacun, le précédent est
+  gardé, plus la préparation d'une borne en ligne), les rapports, les
+  journaux et la quarantaine ;</li>
+<li>la règle USBGuard de <strong>chaque</strong> écran tactile : elle est liée au numéro de
+  série et au port de son contrôleur tactile. Lisez-la dans
+  <code>usb-devices.txt</code> d'un export de maintenance, ou dans l'événement
+  <code>usb_device_blocked</code> de la borne, puis construisez l'image de cette borne
+  avec elle (<a href="../image/#usb-devices">Périphériques USB</a>) ;</li>
+<li>une borne de secours, installée et pourvue de signatures, pour remplacer
+  une borne en panne.</li>
+</ul>
+<h2 id="placement">Emplacement<a class="headerlink" href="#placement" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Un endroit <strong>visible</strong> du personnel, à l'entrée de la zone protégée : un
+  accueil, un poste de sécurité, l'entrée d'un laboratoire. Pas une pièce
+  fermée où personne ne voit qui utilise la borne.</li>
+<li>Seul le port d'analyse accessible : le boîtier cache les autres ports et
+  le bouton d'alimentation. Désactivez les ports USB inutilisés dans le
+  BIOS quand il le permet
+  (<a href="../install/#devices-and-advanced-settings">Installation initiale</a>).</li>
+<li>Une prise de courant ; la borne redémarre seule après une coupure de
+  courant (réglage <em>After Power Loss</em> du BIOS).</li>
+<li>Pour une borne en ligne, une prise réseau filaire dans un segment réseau
+  dédié (VLAN), sans accès aux réseaux internes.</li>
+<li>La procédure des utilisateurs affichée à côté de la borne : voir
+  <a href="#users">Utilisateurs</a>.</li>
+</ul>
+<h2 id="network">Réseau<a class="headerlink" href="#network" title="Permanent link">&para;</a></h2>
+<p>Une borne hors ligne n'a besoin de rien. Une borne en ligne n'ouvre que des
+connexions sortantes : son pare-feu rejette toute connexion entrante, et ne
+laisse sortir que les services ci-dessous, chacun par son propre
+utilisateur système (<a href="../build/#profile-online">Profil online</a>). Autorisez
+les mêmes flux, et seulement eux, depuis le segment réseau des bornes :</p>
+<table>
+<thead>
+<tr>
+<th>Flux</th>
+<th>Destination</th>
+<th>Protocole, port</th>
+<th>Quand</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DHCP</td>
+<td>Serveur DHCP du segment</td>
+<td>UDP 67</td>
+<td>toujours</td>
+</tr>
+<tr>
+<td>DNS</td>
+<td>Serveurs DNS donnés par DHCP</td>
+<td>UDP et TCP 53</td>
+<td>toujours</td>
+</tr>
+<tr>
+<td>NTP</td>
+<td>Serveurs NTP de l'image, sinon du DHCP, sinon le pool Debian (<a href="../build/#time">Heure</a>)</td>
+<td>UDP 123</td>
+<td>toujours</td>
+</tr>
+<tr>
+<td>Signatures ClamAV</td>
+<td><code>database.clamav.net</code></td>
+<td>HTTPS, TCP 443</td>
+<td><code>updates.sources</code></td>
+</tr>
+<tr>
+<td>YARA Forge</td>
+<td><code>github.com</code> et les serveurs de téléchargement GitHub vers lesquels il redirige</td>
+<td>HTTPS, TCP 443</td>
+<td><code>updates.sources</code></td>
+</tr>
+<tr>
+<td>MalwareBazaar</td>
+<td><code>mb-api.abuse.ch</code></td>
+<td>HTTPS, TCP 443</td>
+<td><code>updates.sources</code></td>
+</tr>
+<tr>
+<td>Hashlookup</td>
+<td><code>cra.circl.lu</code></td>
+<td>HTTPS, TCP 443</td>
+<td><code>updates.sources</code></td>
+</tr>
+<tr>
+<td>Jeu de signatures publié, mises à jour de l'image</td>
+<td>le serveur web de l'organisation</td>
+<td>HTTPS, TCP 443</td>
+<td><code>updates.url</code>, <code>updates.image_url</code></td>
+</tr>
+<tr>
+<td>Proxy</td>
+<td>le proxy de l'organisation</td>
+<td>son port</td>
+<td><code>updates.proxy</code>, à la place des quatre sources ci-dessus</td>
+</tr>
+<tr>
+<td>SIEM</td>
+<td>le SIEM</td>
+<td>TLS, TCP 6514 par défaut (TCP ou UDP 514)</td>
+<td><code>[siem]</code> (<a href="../siem/">SIEM</a>)</td>
+</tr>
+<tr>
+<td>Borne de transfert</td>
+<td>le serveur SSH</td>
+<td>TCP 22</td>
+<td><code>[airgap]</code> (<a href="../airgap/">Copie vers un serveur</a>)</td>
+</tr>
+</tbody>
+</table>
+<p>Deux façons d'alimenter en signatures un parc de bornes :</p>
+<ul>
+<li><strong>Depuis les sources</strong> : chaque borne télécharge elle-même les sources
+  (dont le filtre Hashlookup, environ 1 Go chaque mois), et a besoin de
+  l'Auth-Key abuse.ch dans son image.</li>
+<li><strong>Depuis un jeu publié</strong> : un ordinateur de publication de l'organisation
+  lance <code>publish/publish.sh</code> chaque jour et dépose le jeu signé sur un
+  serveur web interne
+  (<a href="../signatures/#a-published-set-instead">Un jeu publié à la place</a>). Les
+  bornes ne joignent que ce serveur, n'ont besoin d'aucun secret, et ne
+  téléchargent que les fichiers qui ont changé. Préférez-le au-delà de
+  quelques bornes, ou quand les bornes ne doivent pas joindre Internet.</li>
+</ul>
+<h2 id="building-the-images">Construire les images<a class="headerlink" href="#building-the-images" title="Permanent link">&para;</a></h2>
+<p>Sur l'ordinateur de construction, pour chaque borne (voir
+<a href="../build/">Construction de l'image</a>) :</p>
+<ol>
+<li>Réglez la configuration dans <code>packaging/pandora-box.toml</code> :
+   <code>kiosk.name</code>, <code>display.language</code>, <code>[updates]</code>, <code>[siem]</code>, <code>[airgap]</code>.
+   Vérifiez-la avec <code>pandora-box --check-config</code>.</li>
+<li>Placez le thème de l'organisation dans <code>image/theme/</code>
+   (<a href="../interface/#customization">Interface</a>), les autorités de
+   certification du SIEM dans <code>image/siem-ca.pem</code>, les secrets dans
+   <code>image/credentials.toml</code>, la règle de l'écran tactile dans
+   <code>image/mkosi.extra/etc/usbguard/rules.conf</code>.</li>
+<li>Construisez avec les clés de l'organisation, avec ou sans
+   <code>--profile online</code>.</li>
+<li>Gardez la configuration de chaque borne hors de l'image (un dépôt privé,
+   par exemple) : la prochaine image de cette borne se construit à partir
+   d'elle.</li>
+</ol>
+<p>La version de l'image est l'heure de sa construction : chaque mise à jour
+de l'image doit être plus récente que celle installée
+(<a href="../update/">Mises à jour du système</a>).</p>
+<h2 id="pilot">Borne pilote<a class="headerlink" href="#pilot" title="Permanent link">&para;</a></h2>
+<p>Avant le parc, faites tourner l'image dans une machine virtuelle
+(<a href="../vm/">Test avec QEMU</a>), puis installez une borne pilote et gardez-la
+quelques semaines dans un vrai emplacement :</p>
+<ul>
+<li>l'écran tactile confirme un nettoyage ;</li>
+<li>le fichier de test EICAR est signalé et supprimé ;</li>
+<li>des clés de chaque système de fichiers utilisé dans l'organisation (vfat,
+  exFAT, NTFS, ext4) sont analysées ; une clé chiffrée ou un téléphone est
+  refusé, comme prévu ;</li>
+<li>une clé de mise à jour des signatures, une mise à jour de l'image et une
+  clé de maintenance sont acceptées ;</li>
+<li>pour une borne en ligne : les signatures se mettent à jour d'elles-mêmes,
+  le SIEM reçoit les événements, l'horloge est juste ;</li>
+<li>pour une borne de transfert : les fichiers sains arrivent sur le serveur,
+  les fichiers sortants arrivent sur la clé ;</li>
+<li>la durée d'analyse des clés habituelles des utilisateurs est acceptable
+  (<a href="../hardware/#validated-hardware">Matériel</a>).</li>
+</ul>
+<h2 id="installing-the-kiosks">Installer les bornes<a class="headerlink" href="#installing-the-kiosks" title="Permanent link">&para;</a></h2>
+<p>Pour chaque borne (<a href="../install/">Installation initiale</a>) :</p>
+<ol>
+<li>Configurez le BIOS : mot de passe superviseur, Secure Boot en mode
+   configuration, démarrage sur le disque interne uniquement, VT-d activé,
+   redémarrage après une coupure de courant.</li>
+<li>Écrivez l'image de la borne sur son disque.</li>
+<li>Au premier démarrage, vérifiez que Secure Boot est en mode <strong>User</strong>.</li>
+<li>Insérez un premier jeu de signatures : jusque-là, la borne affiche
+   <code>NO VALID SIGNATURES</code> et n'analyse rien.</li>
+<li>Vérifiez-la avec le fichier de test EICAR et une clé de maintenance :
+   <code>failed-services.txt</code> est vide, <code>signatures.txt</code> montre le jeu.</li>
+<li>Notez son nom, son emplacement, la version de l'image et la date dans la
+   liste des bornes.</li>
+</ol>
+<h2 id="users">Utilisateurs<a class="headerlink" href="#users" title="Permanent link">&para;</a></h2>
+<p>Dites aux utilisateurs ce que fait la borne, et ce qu'elle ne fait pas :</p>
+<ul>
+<li><strong>Quand</strong> : toute clé qui vient de l'extérieur, ou qui a servi à
+  l'extérieur, est analysée avant d'être branchée sur un poste de
+  l'organisation.</li>
+<li><strong>Comment</strong> : insérer la clé, attendre le résultat, toucher l'écran pour
+  supprimer les fichiers dangereux, retirer la clé. Les affiches de
+  <a href="https://github.com/sourcentis/pandora-box/tree/main/docs/poster"><code>docs/poster/</code></a>
+  montrent ces étapes, à imprimer et afficher à côté de la borne.</li>
+<li><strong>Le résultat</strong> : une clé <strong>non vérifiée</strong> ne doit pas être utilisée : un
+  fichier n'a pas pu être analysé (archive chiffrée, fichier trop gros,
+  erreur). L'utilisateur l'apporte à l'équipe sécurité, ou s'en passe.</li>
+<li><strong>Les limites</strong> : un résultat sain signifie qu'aucun moteur n'a rien
+  détecté, pas que la clé est sûre (<a href="../threat-model/">Modèle de menace</a>).
+  Les postes de travail gardent leurs propres protections.</li>
+<li><strong>Qui appeler</strong> : le contact de l'équipe sécurité, dans le thème de la
+  borne (<a href="../interface/#texts">Textes</a>) ou sur l'affiche.</li>
+</ul>
+<h2 id="operation">Exploitation<a class="headerlink" href="#operation" title="Permanent link">&para;</a></h2>
+<h3 id="recurring-tasks">Tâches récurrentes<a class="headerlink" href="#recurring-tasks" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Tâche</th>
+<th>Fréquence</th>
+<th>Comment</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Jeu de signatures</td>
+<td>chaque jour (en ligne), au moins chaque semaine (hors ligne)</td>
+<td><a href="../signatures/">Signatures</a> : automatique en ligne ; une clé de mise à jour des signatures sinon</td>
+</tr>
+<tr>
+<td>Mise à jour de l'image</td>
+<td>chaque mois, et pour chaque mise à jour de sécurité Debian qui concerne la borne</td>
+<td>reconstruire avec les mêmes clés et la même configuration, puis <a href="../update/">Mises à jour du système</a></td>
+</tr>
+<tr>
+<td>Journaux</td>
+<td>en continu (SIEM), ou à chaque passage (clé de maintenance)</td>
+<td><a href="../logs/">Journaux</a>, <a href="../siem/">SIEM</a></td>
+</tr>
+<tr>
+<td>Vérification de la borne</td>
+<td>à chaque passage</td>
+<td>l'écran n'affiche aucun avertissement de signatures ; le boîtier est fermé et intact ; aucun autre appareil que la borne n'est branché</td>
+</tr>
+<tr>
+<td>Quarantaine et rapports</td>
+<td>chaque année</td>
+<td>voir <a href="#data-on-the-kiosk">Données sur la borne</a></td>
+</tr>
+<tr>
+<td>YubiKey</td>
+<td>chaque année</td>
+<td>les deux YubiKey signent encore (une signature de test) ; les détenteurs des clés connaissent les PIN</td>
+</tr>
+</tbody>
+</table>
+<h3 id="what-to-watch">Ce qu'il faut surveiller<a class="headerlink" href="#what-to-watch" title="Permanent link">&para;</a></h3>
+<p>Dans le SIEM, ou dans les exports de maintenance
+(<a href="../logs/#useful-events">Événements utiles</a>,
+<a href="../siem/#dashboards">Tableaux de bord</a>) :</p>
+<table>
+<thead>
+<tr>
+<th>Événement</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>infected_files</code>, <code>device_verdict</code> malveillant</td>
+<td>Chercher d'où vient la clé, et sur quels postes elle a été branchée avant la borne</td>
+</tr>
+<tr>
+<td><code>usb_device_blocked</code> avec <code>composite</code></td>
+<td>Une clé qui est aussi un clavier : gardez la clé, c'est un outil d'attaque</td>
+</tr>
+<tr>
+<td><code>usb_device_blocked</code>, autres périphériques</td>
+<td>Quelqu'un a branché un clavier, un adaptateur réseau ou un téléphone : vérifiez la borne</td>
+</tr>
+<tr>
+<td><code>device_suspicious_behavior</code></td>
+<td>Une clé qui s'est déconnectée d'elle-même pendant son analyse : gardez-la pour analyse</td>
+</tr>
+<tr>
+<td><code>signatures_refused</code>, <code>maintenance_refused</code></td>
+<td>Une clé signée par une autre clé, trop ancienne ou modifiée : qui l'a apportée ?</td>
+</tr>
+<tr>
+<td>Aucun <code>signatures_changed</code> depuis plusieurs jours (en ligne)</td>
+<td>La borne ne joint plus ses sources : réseau, proxy, Auth-Key</td>
+</tr>
+<tr>
+<td>Aucun événement d'une borne</td>
+<td>Éteinte, débranchée, ou elle ne démarre plus : allez voir</td>
+</tr>
+</tbody>
+</table>
+<h3 id="detections">Détections<a class="headerlink" href="#detections" title="Permanent link">&para;</a></h3>
+<p>Quand une borne signale un fichier malveillant :</p>
+<ol>
+<li>Le fichier est copié dans la quarantaine de la borne, puis supprimé de la
+   clé après un appui sur l'écran. Son SHA-256 et les moteurs qui l'ont
+   détecté sont dans le rapport d'analyse et dans l'événement
+   <code>infected_files</code>.</li>
+<li>Demandez à l'utilisateur d'où vient la clé, et sur quels ordinateurs
+   elle a servi : ils peuvent être infectés.</li>
+<li>Une copie du fichier est dans la quarantaine de la borne
+   (<code>/var/lib/pandora-box/quarantine/</code>), sur son disque uniquement : l'export
+   de maintenance ne la rapporte pas. Pour l'analyser, sortez le disque, en
+   laboratoire.</li>
+</ol>
+<h3 id="failures">Pannes<a class="headerlink" href="#failures" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Symptôme</th>
+<th>Cause, action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NO VALID SIGNATURES</code></td>
+<td>Aucun jeu installé, ou le jeu installé échoue à sa vérification : insérez une clé de mise à jour des signatures</td>
+</tr>
+<tr>
+<td>Avertissement de signatures à l'écran</td>
+<td>Les signatures ont plus de 7 jours : insérez un jeu, ou vérifiez le réseau d'une borne en ligne</td>
+</tr>
+<tr>
+<td>L'écran tactile ne confirme pas</td>
+<td>USBGuard le bloque : un autre exemplaire ou un autre port que la règle de l'image (<a href="../image/#usb-devices">Périphériques USB</a>)</td>
+</tr>
+<tr>
+<td>La borne redémarre sur la version précédente</td>
+<td>La nouvelle image a échoué 3 fois à démarrer : <code>boots.txt</code> d'un export de maintenance (<a href="../update/#if-the-new-version-fails">Si la nouvelle version échoue</a>)</td>
+</tr>
+<tr>
+<td>La borne ne démarre pas</td>
+<td>Prenez la borne de secours ; vérifiez les réglages du BIOS et le disque de la borne en panne</td>
+</tr>
+</tbody>
+</table>
+<h2 id="data-on-the-kiosk">Données sur la borne<a class="headerlink" href="#data-on-the-kiosk" title="Permanent link">&para;</a></h2>
+<p>La partition de données (<code>/var</code>) d'une borne contient les rapports
+d'analyse (noms et empreintes des fichiers des utilisateurs), les journaux
+et la quarantaine (copies de logiciels malveillants). Elle n'est <strong>pas
+chiffrée</strong> : qui prend le disque peut la lire
+(<a href="../threat-model/#what-pandorabox-does-not-cover">Modèle de menace</a>).</p>
+<ul>
+<li>Décidez combien de temps les rapports et la quarantaine sont gardés, et
+  inscrivez la borne au registre des traitements de l'organisation quand
+  les rapports nomment les fichiers de personnes. Les journaux changent de
+  fichier chaque mois et sont gardés 12 mois
+  (<a href="../logs/#what-the-kiosk-logs">Journaux</a>).</li>
+<li>Une borne de transfert ne garde ni rapports ni quarantaine sur son disque
+  (<a href="../airgap/#a-stolen-kiosk">Une borne volée</a>).</li>
+<li>Une borne est un lieu où des logiciels malveillants sont conservés : ne
+  la laissez pas quitter l'organisation sans effacer son disque.</li>
+</ul>
+<h2 id="decommissioning">Retrait d'une borne<a class="headerlink" href="#decommissioning" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Rapportez les journaux avec une clé de maintenance, s'ils sont encore
+   utiles.</li>
+<li>Effacez le disque (<code>blkdiscard</code>, ou un écrasement complet d'un disque
+   dur) : il contient la quarantaine, les rapports, et les secrets d'une
+   borne en ligne.</li>
+<li>Dans le BIOS : Security → Secure Boot → <strong>Restore Factory Keys</strong>, et
+   retirez le mot de passe superviseur, avant de rendre l'ordinateur à un
+   autre usage.</li>
+<li>Pour une borne en ligne ou une borne de transfert : révoquez ses secrets
+   (Auth-Key abuse.ch, clé SSH sur le serveur) quand les autres bornes ne
+   les partagent pas, et fermez ses flux réseau.</li>
+<li>Retirez-la de la liste des bornes.</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Retour en haut de la page
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright <a href="https://www.gnu.org/licenses/gpl-3.0.html">GPL-3.0</a>.
+    </div>
+  
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.indexes", "navigation.expand", "navigation.top", "content.code.copy", "content.action.edit", "content.action.view"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copi\u00e9 dans le presse-papier", "clipboard.copy": "Copier dans le presse-papier", "search.result.more.one": "1 de plus sur cette page", "search.result.more.other": "# de plus sur cette page", "search.result.none": "Aucun document trouv\u00e9", "search.result.one": "1 document trouv\u00e9", "search.result.other": "# documents trouv\u00e9s", "search.result.placeholder": "Taper pour d\u00e9marrer la recherche", "search.result.term.missing": "Non trouv\u00e9", "select.version": "S\u00e9lectionner la version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
